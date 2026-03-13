@@ -10,77 +10,58 @@ import {
 import { Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
+import { LineChart } from "react-native-chart-kit";
 import { useSimulation, SimulationStatus } from "../hooks/useSimulation";
 
 const screenWidth = Dimensions.get("window").width - 32;
 
-function SimpleChart({ data, label, color }: { data: number[]; label: string; color: string }) {
-  if (data.length === 0) return null;
-  const max = Math.max(...data, 1);
-  const barWidth = Math.max(1, screenWidth / data.length);
+const solarChartConfig = {
+  backgroundColor: "#16213E",
+  backgroundGradientFrom: "#16213E",
+  backgroundGradientTo: "#1A1A2E",
+  decimalPlaces: 1,
+  color: (opacity = 1) => `rgba(245, 166, 35, ${opacity})`,
+  labelColor: (opacity = 1) => `rgba(170, 170, 170, ${opacity})`,
+  propsForDots: { r: "2", strokeWidth: "1", stroke: "#F5A623" },
+  propsForBackgroundLines: { stroke: "#2A2A4A" },
+};
 
-  return (
-    <View style={styles.chartCard}>
-      <Text style={styles.chartTitle}>{label}</Text>
-      <View style={styles.chartContainer}>
-        <View style={styles.barsRow}>
-          {data.map((val, i) => (
-            <View
-              key={i}
-              style={[
-                styles.bar,
-                {
-                  width: barWidth,
-                  height: Math.max(1, (val / max) * 120),
-                  backgroundColor: color,
-                },
-              ]}
-            />
-          ))}
-        </View>
-        <View style={styles.axisLabels}>
-          <Text style={styles.axisText}>0W</Text>
-          <Text style={styles.axisText}>{max.toFixed(1)}W</Text>
-        </View>
-      </View>
-    </View>
-  );
+const consumptionChartConfig = {
+  backgroundColor: "#16213E",
+  backgroundGradientFrom: "#16213E",
+  backgroundGradientTo: "#1A1A2E",
+  decimalPlaces: 1,
+  color: (opacity = 1) => `rgba(33, 150, 243, ${opacity})`,
+  labelColor: (opacity = 1) => `rgba(170, 170, 170, ${opacity})`,
+  propsForDots: { r: "2", strokeWidth: "1", stroke: "#2196F3" },
+  propsForBackgroundLines: { stroke: "#2A2A4A" },
+};
+
+const batteryChartConfig = {
+  backgroundColor: "#16213E",
+  backgroundGradientFrom: "#16213E",
+  backgroundGradientTo: "#1A1A2E",
+  decimalPlaces: 0,
+  color: (opacity = 1) => `rgba(76, 175, 80, ${opacity})`,
+  labelColor: (opacity = 1) => `rgba(170, 170, 170, ${opacity})`,
+  propsForDots: { r: "2", strokeWidth: "1", stroke: "#4CAF50" },
+  propsForBackgroundLines: { stroke: "#2A2A4A" },
+};
+
+function sampleData(data: number[], maxPoints: number): number[] {
+  if (data.length <= maxPoints) return data;
+  const step = Math.ceil(data.length / maxPoints);
+  return data.filter((_, i) => i % step === 0);
 }
 
-function BatteryChart({ data }: { data: number[] }) {
-  if (data.length === 0) return null;
-  const barWidth = Math.max(1, screenWidth / data.length);
-
-  return (
-    <View style={styles.chartCard}>
-      <Text style={styles.chartTitle}>Batarya Seviyesi (%)</Text>
-      <View style={styles.chartContainer}>
-        <View style={styles.barsRow}>
-          {data.map((val, i) => {
-            const color = val > 50 ? "#4CAF50" : val > 20 ? "#FFC107" : "#F44336";
-            return (
-              <View
-                key={i}
-                style={[
-                  styles.bar,
-                  {
-                    width: barWidth,
-                    height: Math.max(1, (val / 100) * 80),
-                    backgroundColor: color,
-                    opacity: 0.7,
-                  },
-                ]}
-              />
-            );
-          })}
-        </View>
-        <View style={styles.axisLabels}>
-          <Text style={styles.axisText}>0%</Text>
-          <Text style={styles.axisText}>100%</Text>
-        </View>
-      </View>
-    </View>
-  );
+function sampleLabels(history: SimulationStatus[], maxLabels: number): string[] {
+  if (history.length === 0) return [""];
+  const step = Math.max(1, Math.floor(history.length / maxLabels));
+  const labels: string[] = [];
+  for (let i = 0; i < history.length; i += step) {
+    labels.push(history[i].time);
+  }
+  return labels.length > 0 ? labels : [""];
 }
 
 export default function HistoryScreen() {
@@ -142,11 +123,13 @@ export default function HistoryScreen() {
     );
   }
 
-  const solarData = history.map((h) => h.solar_watts);
-  const consumptionData = history.map((h) => h.consumption_watts);
-  const batteryData = history.map((h) => h.battery_percent);
+  const maxPoints = 30;
+  const labels = sampleLabels(history, 6);
+  const solarData = sampleData(history.map((h) => h.solar_watts), maxPoints);
+  const consumptionData = sampleData(history.map((h) => h.consumption_watts), maxPoints);
+  const batteryData = sampleData(history.map((h) => h.battery_percent), maxPoints);
 
-  const timeLabels = history.filter((_, i) => i % Math.max(1, Math.floor(history.length / 6)) === 0);
+  const ensureNonEmpty = (arr: number[]) => (arr.length > 0 ? arr : [0]);
 
   return (
     <ScrollView
@@ -159,15 +142,54 @@ export default function HistoryScreen() {
         <Text style={styles.dataPoints}>{history.length} veri noktasi</Text>
       </View>
 
-      <View style={styles.timeLabelsRow}>
-        {timeLabels.map((h, i) => (
-          <Text key={i} style={styles.timeLabel}>{h.time}</Text>
-        ))}
+      <View style={styles.chartCard}>
+        <Text style={styles.chartTitle}>Gunes Uretimi (W)</Text>
+        <LineChart
+          data={{
+            labels,
+            datasets: [{ data: ensureNonEmpty(solarData) }],
+          }}
+          width={screenWidth - 32}
+          height={200}
+          chartConfig={solarChartConfig}
+          bezier
+          style={styles.chart}
+          withVerticalLines={false}
+        />
       </View>
 
-      <SimpleChart data={solarData} label="Gunes Uretimi (W)" color="#F5A623" />
-      <SimpleChart data={consumptionData} label="Tuketim (W)" color="#2196F3" />
-      <BatteryChart data={batteryData} />
+      <View style={styles.chartCard}>
+        <Text style={styles.chartTitle}>Tuketim (W)</Text>
+        <LineChart
+          data={{
+            labels,
+            datasets: [{ data: ensureNonEmpty(consumptionData) }],
+          }}
+          width={screenWidth - 32}
+          height={200}
+          chartConfig={consumptionChartConfig}
+          bezier
+          style={styles.chart}
+          withVerticalLines={false}
+        />
+      </View>
+
+      <View style={styles.chartCard}>
+        <Text style={styles.chartTitle}>Batarya Seviyesi (%)</Text>
+        <LineChart
+          data={{
+            labels,
+            datasets: [{ data: ensureNonEmpty(batteryData) }],
+          }}
+          width={screenWidth - 32}
+          height={200}
+          chartConfig={batteryChartConfig}
+          bezier
+          style={styles.chart}
+          withVerticalLines={false}
+          fromZero
+        />
+      </View>
     </ScrollView>
   );
 }
@@ -201,15 +223,6 @@ const styles = StyleSheet.create({
     color: "#AAAAAA",
     fontSize: 12,
   },
-  timeLabelsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  timeLabel: {
-    color: "#AAAAAA",
-    fontSize: 10,
-  },
   chartCard: {
     backgroundColor: "#16213E",
     borderRadius: 12,
@@ -228,26 +241,8 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: 12,
   },
-  chartContainer: {
-    height: 140,
-    justifyContent: "flex-end",
-  },
-  barsRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    height: 120,
-  },
-  bar: {
-    borderRadius: 1,
-  },
-  axisLabels: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 4,
-  },
-  axisText: {
-    color: "#666666",
-    fontSize: 10,
+  chart: {
+    borderRadius: 8,
   },
   errorText: {
     color: "#F44336",
