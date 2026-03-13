@@ -1,194 +1,156 @@
-import React from "react";
-import { ScrollView, View, StyleSheet, ActivityIndicator } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { ScrollView, View, StyleSheet, ActivityIndicator, Animated } from "react-native";
 import { Text } from "react-native-paper";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
 import WeatherAnimation from "../components/WeatherAnimation";
 import SunCycle from "../components/SunCycle";
 import AnimatedBattery from "../components/AnimatedBattery";
 import EnergyFlow from "../components/EnergyFlow";
-import PowerGauge from "../components/PowerGauge";
 import { useSimulation } from "../hooks/useSimulation";
+
+function FadeIn({ delay = 0, children }: { delay?: number; children: React.ReactNode }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(20)).current;
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(opacity, { toValue: 1, tension: 60, friction: 10, delay, useNativeDriver: true }),
+      Animated.spring(translateY, { toValue: 0, tension: 60, friction: 10, delay, useNativeDriver: true }),
+    ]).start();
+  }, [opacity, translateY, delay]);
+  return <Animated.View style={{ opacity, transform: [{ translateY }] }}>{children}</Animated.View>;
+}
 
 export default function DashboardScreen() {
   const { status, error, loading } = useSimulation();
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color="#F5A623" />
-        <Text style={styles.loadingText}>Simulatora baglaniliyor...</Text>
-      </View>
+      <SafeAreaView style={[styles.container, styles.center]}>
+        <ActivityIndicator size="large" color="#FFD60A" />
+        <Text style={styles.loadingText}>Connecting...</Text>
+      </SafeAreaView>
     );
   }
 
   if (error || !status) {
     return (
-      <View style={[styles.container, styles.center]}>
-        <MaterialCommunityIcons name="wifi-off" size={64} color="#FF4444" />
-        <Text style={styles.errorText}>Baglanti Hatasi</Text>
-        <Text style={styles.errorDetail}>{error || "Veri alinamadi"}</Text>
-      </View>
+      <SafeAreaView style={[styles.container, styles.center]}>
+        <Text style={{ fontSize: 48 }}>{"\uD83D\uDCF6"}</Text>
+        <Text style={styles.errorTitle}>Connection Error</Text>
+        <Text style={styles.errorDetail}>{error || "No data"}</Text>
+      </SafeAreaView>
     );
   }
 
-  const netColor = status.net_power >= 0 ? "#00C851" : "#FF4444";
+  const netColor = status.net_power >= 0 ? "#30D158" : "#FF453A";
+  const weatherLabel =
+    status.weather === "sunny" ? "Sunny" :
+    status.weather === "partly_cloudy" ? "Partly Cloudy" :
+    status.weather === "cloudy" ? "Cloudy" : "Night";
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.timeRow}>
-        <MaterialCommunityIcons name="clock-outline" size={18} color="#F5A623" />
-        <Text style={styles.timeText}>{status.time}</Text>
-      </View>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} bounces>
+        {/* Header */}
+        <FadeIn delay={0}>
+          <View style={styles.header}>
+            <Text style={styles.largeTitle}>Solar Station</Text>
+            <Text style={styles.timeText}>{status.time}</Text>
+          </View>
+        </FadeIn>
 
-      <View style={styles.weatherSection}>
-        <WeatherAnimation weather={status.weather} size={120} />
-        <Text style={styles.weatherLabel}>
-          {status.weather === "sunny"
-            ? "Gunesli"
-            : status.weather === "partly_cloudy"
-            ? "Parcali Bulutlu"
-            : status.weather === "cloudy"
-            ? "Bulutlu"
-            : "Gece"}
-        </Text>
-      </View>
+        {/* Weather Pill */}
+        <FadeIn delay={80}>
+          <View style={styles.weatherPillRow}>
+            <View style={styles.weatherPill}>
+              <WeatherAnimation weather={status.weather} size={28} />
+              <Text style={styles.weatherPillText}>{weatherLabel}</Text>
+            </View>
+          </View>
+        </FadeIn>
 
-      <SunCycle time={status.time} />
+        {/* Sun Cycle */}
+        <FadeIn delay={160}>
+          <View style={styles.card}>
+            <SunCycle time={status.time} />
+          </View>
+        </FadeIn>
 
-      <EnergyFlow
-        netPower={status.net_power}
-        solarWatts={status.solar_watts}
-        phoneConnected={status.phone_connected}
-      />
-
-      <View style={styles.batterySection}>
-        <AnimatedBattery percent={status.battery_percent} chargingStatus={status.charging_status} />
-      </View>
-
-      <View style={styles.statsRow}>
-        <View style={[styles.statCard, { borderTopColor: "#F5A623" }]}>
-          <MaterialCommunityIcons name="white-balance-sunny" size={20} color="#F5A623" />
-          <Text style={[styles.statValue, { color: "#F5A623" }]}>{status.solar_watts.toFixed(1)}</Text>
-          <Text style={styles.statUnit}>W uretim</Text>
-        </View>
-        <View style={[styles.statCard, { borderTopColor: "#2196F3" }]}>
-          <MaterialCommunityIcons name="cellphone-charging" size={20} color="#2196F3" />
-          <Text style={[styles.statValue, { color: "#2196F3" }]}>{status.consumption_watts.toFixed(1)}</Text>
-          <Text style={styles.statUnit}>W tuketim</Text>
-        </View>
-        <View style={[styles.statCard, { borderTopColor: netColor }]}>
-          <MaterialCommunityIcons
-            name={status.net_power >= 0 ? "trending-up" : "trending-down"}
-            size={20}
-            color={netColor}
+        {/* Energy Flow */}
+        <FadeIn delay={240}>
+          <EnergyFlow
+            netPower={status.net_power}
+            solarWatts={status.solar_watts}
+            phoneConnected={status.phone_connected}
           />
-          <Text style={[styles.statValue, { color: netColor }]}>{status.net_power.toFixed(1)}</Text>
-          <Text style={styles.statUnit}>W net</Text>
-        </View>
-      </View>
+        </FadeIn>
 
-      <View style={styles.infoRow}>
-        <Text style={styles.infoText}>Batarya: {status.battery_wh.toFixed(1)} / 37.0 Wh</Text>
-        <Text style={styles.infoText}>Verim: {status.efficiency}%</Text>
-      </View>
-    </ScrollView>
+        {/* Battery */}
+        <FadeIn delay={320}>
+          <View style={styles.card}>
+            <AnimatedBattery percent={status.battery_percent} chargingStatus={status.charging_status} />
+          </View>
+        </FadeIn>
+
+        {/* Stats Row */}
+        <FadeIn delay={400}>
+          <View style={styles.statsRow}>
+            <StatCard value={status.solar_watts.toFixed(1)} unit="W" label="Solar" color="#FFD60A" />
+            <StatCard value={status.consumption_watts.toFixed(1)} unit="W" label="Load" color="#0A84FF" />
+            <StatCard value={status.net_power.toFixed(1)} unit="W" label="Net" color={netColor} />
+          </View>
+        </FadeIn>
+
+        {/* Info */}
+        <FadeIn delay={480}>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoText}>{status.battery_wh.toFixed(1)} / 37.0 Wh</Text>
+            <Text style={styles.infoText}>Eff. {status.efficiency}%</Text>
+          </View>
+        </FadeIn>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function StatCard({ value, unit, label, color }: { value: string; unit: string; label: string; color: string }) {
+  return (
+    <View style={styles.statCard}>
+      <Text style={[styles.statValue, { color }]}>{value}<Text style={styles.statUnit}>{unit}</Text></Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#1A1A2E",
+  container: { flex: 1, backgroundColor: "#000000" },
+  center: { justifyContent: "center", alignItems: "center" },
+  content: { paddingHorizontal: 16, paddingBottom: 32 },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 16, marginTop: 8 },
+  largeTitle: { color: "#FFFFFF", fontSize: 34, fontWeight: "700", letterSpacing: -0.5 },
+  timeText: { color: "rgba(235,235,245,0.6)", fontSize: 17, fontWeight: "600", letterSpacing: -0.3 },
+  weatherPillRow: { alignItems: "center", marginBottom: 12 },
+  weatherPill: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    backgroundColor: "#3A3A3C", paddingHorizontal: 16, paddingVertical: 6,
+    borderRadius: 18, height: 36,
   },
-  center: {
-    justifyContent: "center",
-    alignItems: "center",
+  weatherPillText: { color: "#FFFFFF", fontSize: 15, fontWeight: "500", letterSpacing: -0.3 },
+  card: {
+    backgroundColor: "#1C1C1E", borderRadius: 20, padding: 16, marginVertical: 6,
   },
-  content: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  timeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    marginBottom: 4,
-  },
-  timeText: {
-    color: "#F5A623",
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  weatherSection: {
-    alignItems: "center",
-    marginVertical: 4,
-  },
-  weatherLabel: {
-    color: "#8892A4",
-    fontSize: 13,
-    marginTop: 4,
-    letterSpacing: 1,
-  },
-  batterySection: {
-    alignItems: "center",
-    marginVertical: 4,
-  },
-  statsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 8,
-    marginTop: 8,
-  },
+  statsRow: { flexDirection: "row", gap: 8, marginTop: 8 },
   statCard: {
-    flex: 1,
-    backgroundColor: "#16213E",
-    borderRadius: 12,
-    borderTopWidth: 3,
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-    alignItems: "center",
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    flex: 1, backgroundColor: "#1C1C1E", borderRadius: 12,
+    paddingVertical: 16, paddingHorizontal: 12, alignItems: "center",
   },
-  statValue: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginTop: 4,
-  },
-  statUnit: {
-    color: "#8892A4",
-    fontSize: 10,
-    marginTop: 2,
-    textTransform: "uppercase",
-  },
-  infoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 12,
-    paddingHorizontal: 4,
-  },
-  infoText: {
-    color: "#8892A4",
-    fontSize: 12,
-  },
-  loadingText: {
-    color: "#8892A4",
-    marginTop: 12,
-    fontSize: 14,
-  },
-  errorText: {
-    color: "#FF4444",
-    fontSize: 18,
-    fontWeight: "bold",
-    marginTop: 12,
-  },
-  errorDetail: {
-    color: "#8892A4",
-    fontSize: 13,
-    marginTop: 4,
-  },
+  statValue: { fontSize: 22, fontWeight: "700", letterSpacing: -0.5 },
+  statUnit: { fontSize: 14, fontWeight: "400" },
+  statLabel: { color: "rgba(235,235,245,0.3)", fontSize: 12, fontWeight: "400", marginTop: 4, letterSpacing: -0.3 },
+  infoRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 12, paddingHorizontal: 4 },
+  infoText: { color: "rgba(235,235,245,0.3)", fontSize: 13, letterSpacing: -0.3 },
+  loadingText: { color: "rgba(235,235,245,0.6)", marginTop: 12, fontSize: 15 },
+  errorTitle: { color: "#FF453A", fontSize: 20, fontWeight: "700", marginTop: 16 },
+  errorDetail: { color: "rgba(235,235,245,0.3)", fontSize: 15, marginTop: 4 },
 });

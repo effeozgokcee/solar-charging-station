@@ -1,77 +1,82 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
-  ScrollView,
-  View,
-  StyleSheet,
-  ActivityIndicator,
-  RefreshControl,
-  Dimensions,
-  Animated,
+  ScrollView, View, StyleSheet, ActivityIndicator,
+  RefreshControl, Dimensions, Animated, TouchableOpacity,
 } from "react-native";
 import { Text } from "react-native-paper";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
 import { LineChart } from "react-native-chart-kit";
+import * as Haptics from "expo-haptics";
 import WeatherAnimation from "../components/WeatherAnimation";
 import { useSimulation, SimulationStatus } from "../hooks/useSimulation";
 
-const screenWidth = Dimensions.get("window").width - 32;
+const screenW = Dimensions.get("window").width - 32;
 
-const solarChartConfig = {
-  backgroundColor: "#16213E",
-  backgroundGradientFrom: "#16213E",
-  backgroundGradientTo: "#1A1A2E",
+const baseConfig = {
+  backgroundColor: "transparent",
+  backgroundGradientFrom: "#1C1C1E",
+  backgroundGradientTo: "#1C1C1E",
   decimalPlaces: 1,
-  color: (opacity = 1) => `rgba(245, 166, 35, ${opacity})`,
-  labelColor: (opacity = 1) => `rgba(136, 146, 164, ${opacity})`,
-  propsForDots: { r: "2", strokeWidth: "1", stroke: "#F5A623" },
-  propsForBackgroundLines: { stroke: "#2A2A4A" },
+  labelColor: () => "rgba(235,235,245,0.3)",
+  propsForBackgroundLines: { stroke: "rgba(255,255,255,0.05)" },
+  propsForDots: { r: "2" },
 };
 
-const consumptionChartConfig = {
-  ...solarChartConfig,
-  color: (opacity = 1) => `rgba(33, 150, 243, ${opacity})`,
-  propsForDots: { r: "2", strokeWidth: "1", stroke: "#2196F3" },
-};
+const solarConfig = { ...baseConfig, color: (o = 1) => `rgba(255,214,10,${o})`, propsForDots: { ...baseConfig.propsForDots, stroke: "#FFD60A" } };
+const loadConfig = { ...baseConfig, color: (o = 1) => `rgba(10,132,255,${o})`, propsForDots: { ...baseConfig.propsForDots, stroke: "#0A84FF" } };
+const battConfig = { ...baseConfig, decimalPlaces: 0, color: (o = 1) => `rgba(48,209,88,${o})`, propsForDots: { ...baseConfig.propsForDots, stroke: "#30D158" } };
 
-const batteryChartConfig = {
-  ...solarChartConfig,
-  decimalPlaces: 0,
-  color: (opacity = 1) => `rgba(0, 200, 81, ${opacity})`,
-  propsForDots: { r: "2", strokeWidth: "1", stroke: "#00C851" },
-};
-
-function sampleData(data: number[], maxPoints: number): number[] {
-  if (data.length <= maxPoints) return data;
-  const step = Math.ceil(data.length / maxPoints);
-  return data.filter((_, i) => i % step === 0);
+function sample(arr: number[], max: number): number[] {
+  if (arr.length <= max) return arr;
+  const step = Math.ceil(arr.length / max);
+  return arr.filter((_, i) => i % step === 0);
 }
 
-function sampleLabels(history: SimulationStatus[], maxLabels: number): string[] {
-  if (history.length === 0) return [""];
-  const step = Math.max(1, Math.floor(history.length / maxLabels));
-  const labels: string[] = [];
-  for (let i = 0; i < history.length; i += step) {
-    labels.push(history[i].time);
-  }
-  return labels.length > 0 ? labels : [""];
+function labels(h: SimulationStatus[], n: number): string[] {
+  if (!h.length) return [""];
+  const step = Math.max(1, Math.floor(h.length / n));
+  const r: string[] = [];
+  for (let i = 0; i < h.length; i += step) r.push(h[i].time);
+  return r.length ? r : [""];
 }
 
-function FadeInCard({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
-  const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(20)).current;
-
+function FadeIn({ delay = 0, children }: { delay?: number; children: React.ReactNode }) {
+  const o = useRef(new Animated.Value(0)).current;
+  const y = useRef(new Animated.Value(20)).current;
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(opacity, { toValue: 1, duration: 600, delay, useNativeDriver: true }),
-      Animated.timing(translateY, { toValue: 0, duration: 600, delay, useNativeDriver: true }),
+      Animated.spring(o, { toValue: 1, tension: 60, friction: 10, delay, useNativeDriver: true }),
+      Animated.spring(y, { toValue: 0, tension: 60, friction: 10, delay, useNativeDriver: true }),
     ]).start();
-  }, [opacity, translateY, delay]);
+  }, [o, y, delay]);
+  return <Animated.View style={{ opacity: o, transform: [{ translateY: y }] }}>{children}</Animated.View>;
+}
+
+type Tab = "power" | "battery";
+
+function SegmentControl({ active, onChange }: { active: Tab; onChange: (t: Tab) => void }) {
+  const slideX = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(slideX, {
+      toValue: active === "power" ? 0 : 1,
+      tension: 80, friction: 12, useNativeDriver: true,
+    }).start();
+  }, [active, slideX]);
+
+  const translateX = slideX.interpolate({ inputRange: [0, 1], outputRange: [2, (screenW - 16) / 2] });
 
   return (
-    <Animated.View style={{ opacity, transform: [{ translateY }] }}>
-      {children}
-    </Animated.View>
+    <View style={styles.segmentOuter}>
+      <Animated.View style={[styles.segmentIndicator, { transform: [{ translateX }], width: (screenW - 16) / 2 - 2 }]} />
+      <TouchableOpacity style={styles.segmentBtn} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onChange("power"); }}>
+        <Text style={[styles.segmentText, active === "power" && styles.segmentActive]}>Power</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.segmentBtn} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onChange("battery"); }}>
+        <Text style={[styles.segmentText, active === "battery" && styles.segmentActive]}>Battery</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -81,201 +86,150 @@ export default function HistoryScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("power");
 
   const loadData = useCallback(async () => {
     try {
-      const data = await fetchHistory();
-      setHistory(data);
+      const d = await fetchHistory();
+      setHistory(d);
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Veri alinamadi");
+      setError(e instanceof Error ? e.message : "No data");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }, [fetchHistory]);
 
-  useFocusEffect(
-    useCallback(() => {
-      setLoading(true);
-      loadData();
-    }, [loadData])
-  );
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    loadData();
-  };
+  useFocusEffect(useCallback(() => { setLoading(true); loadData(); }, [loadData]));
 
   if (loading && !refreshing) {
-    return (
-      <View style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color="#F5A623" />
-      </View>
-    );
+    return <SafeAreaView style={[styles.container, styles.center]}><ActivityIndicator size="large" color="#FFD60A" /></SafeAreaView>;
   }
 
   if (error) {
     return (
-      <View style={[styles.container, styles.center]}>
-        <MaterialCommunityIcons name="chart-line" size={64} color="#FF4444" />
+      <SafeAreaView style={[styles.container, styles.center]}>
+        <Text style={{ fontSize: 48 }}>{"\uD83D\uDCC9"}</Text>
         <Text style={styles.errorText}>{error}</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
-  if (history.length === 0) {
+  if (!history.length) {
     return (
-      <View style={[styles.container, styles.center]}>
-        <MaterialCommunityIcons name="chart-line" size={64} color="#3A4A5C" />
-        <Text style={styles.emptyText}>Henuz veri yok</Text>
-        <Text style={styles.emptySubtext}>Simulasyon calismaya basladikca veriler burada gorunecek</Text>
-      </View>
+      <SafeAreaView style={[styles.container, styles.center]}>
+        <Text style={{ fontSize: 48 }}>{"\uD83D\uDCC8"}</Text>
+        <Text style={styles.emptyText}>No data yet</Text>
+        <Text style={styles.emptySubtext}>Data will appear as the simulation runs</Text>
+      </SafeAreaView>
     );
   }
 
-  const maxPoints = 30;
-  const labels = sampleLabels(history, 6);
-  const solarData = sampleData(history.map((h) => h.solar_watts), maxPoints);
-  const consumptionData = sampleData(history.map((h) => h.consumption_watts), maxPoints);
-  const batteryData = sampleData(history.map((h) => h.battery_percent), maxPoints);
-  const ensureNonEmpty = (arr: number[]) => (arr.length > 0 ? arr : [0]);
+  const maxPts = 30;
+  const lbls = labels(history, 6);
+  const solarD = sample(history.map((h) => h.solar_watts), maxPts);
+  const loadD = sample(history.map((h) => h.consumption_watts), maxPts);
+  const battD = sample(history.map((h) => h.battery_percent), maxPts);
+  const safe = (a: number[]) => (a.length ? a : [0]);
+
+  const peakSolar = Math.max(...history.map((h) => h.solar_watts)).toFixed(1);
+  const avgBattery = (history.reduce((s, h) => s + h.battery_percent, 0) / history.length).toFixed(0);
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#F5A623" />}
-    >
-      <View style={styles.headerRow}>
-        <View style={styles.headerLeft}>
-          {status && <WeatherAnimation weather={status.weather} size={60} />}
-          <View>
-            <Text style={styles.headerText}>Son 24 Saat</Text>
-            <Text style={styles.dataPoints}>{history.length} veri noktasi</Text>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} bounces
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadData(); }} tintColor="#FFD60A" />}>
+
+        <FadeIn delay={0}>
+          <View style={styles.headerRow}>
+            <Text style={styles.largeTitle}>History</Text>
+            {status && <WeatherAnimation weather={status.weather} size={40} />}
           </View>
-        </View>
-      </View>
+          <Text style={styles.subtitle}>{history.length} data points</Text>
+        </FadeIn>
 
-      <FadeInCard delay={0}>
-        <View style={styles.chartCard}>
-          <Text style={styles.chartTitle}>Gunes Uretimi (W)</Text>
-          <LineChart
-            data={{ labels, datasets: [{ data: ensureNonEmpty(solarData) }] }}
-            width={screenWidth - 32}
-            height={200}
-            chartConfig={solarChartConfig}
-            bezier
-            style={styles.chart}
-            withVerticalLines={false}
-          />
-        </View>
-      </FadeInCard>
+        <FadeIn delay={80}>
+          <SegmentControl active={tab} onChange={setTab} />
+        </FadeIn>
 
-      <FadeInCard delay={150}>
-        <View style={styles.chartCard}>
-          <Text style={styles.chartTitle}>Tuketim (W)</Text>
-          <LineChart
-            data={{ labels, datasets: [{ data: ensureNonEmpty(consumptionData) }] }}
-            width={screenWidth - 32}
-            height={200}
-            chartConfig={consumptionChartConfig}
-            bezier
-            style={styles.chart}
-            withVerticalLines={false}
-          />
-        </View>
-      </FadeInCard>
+        {tab === "power" ? (
+          <>
+            <FadeIn delay={160}>
+              <View style={styles.chartCard}>
+                <Text style={styles.chartTitle}>Solar Production</Text>
+                <LineChart data={{ labels: lbls, datasets: [{ data: safe(solarD) }] }}
+                  width={screenW - 32} height={200} chartConfig={solarConfig} bezier
+                  style={styles.chart} withVerticalLines={false} />
+              </View>
+            </FadeIn>
+            <FadeIn delay={240}>
+              <View style={styles.chartCard}>
+                <Text style={styles.chartTitle}>Consumption</Text>
+                <LineChart data={{ labels: lbls, datasets: [{ data: safe(loadD) }] }}
+                  width={screenW - 32} height={200} chartConfig={loadConfig} bezier
+                  style={styles.chart} withVerticalLines={false} />
+              </View>
+            </FadeIn>
+          </>
+        ) : (
+          <FadeIn delay={160}>
+            <View style={styles.chartCard}>
+              <Text style={styles.chartTitle}>Battery Level</Text>
+              <LineChart data={{ labels: lbls, datasets: [{ data: safe(battD) }] }}
+                width={screenW - 32} height={220} chartConfig={battConfig} bezier
+                style={styles.chart} withVerticalLines={false} fromZero />
+            </View>
+          </FadeIn>
+        )}
 
-      <FadeInCard delay={300}>
-        <View style={styles.chartCard}>
-          <Text style={styles.chartTitle}>Batarya Seviyesi (%)</Text>
-          <LineChart
-            data={{ labels, datasets: [{ data: ensureNonEmpty(batteryData) }] }}
-            width={screenWidth - 32}
-            height={200}
-            chartConfig={batteryChartConfig}
-            bezier
-            style={styles.chart}
-            withVerticalLines={false}
-            fromZero
-          />
-        </View>
-      </FadeInCard>
-    </ScrollView>
+        <FadeIn delay={320}>
+          <View style={styles.summaryRow}>
+            <SummaryItem label="Peak" value={`${peakSolar}W`} color="#FFD60A" />
+            <SummaryItem label="Points" value={`${history.length}`} color="#0A84FF" />
+            <SummaryItem label="Avg Batt" value={`${avgBattery}%`} color="#30D158" />
+          </View>
+        </FadeIn>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function SummaryItem({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <View style={styles.summaryCard}>
+      <Text style={[styles.summaryValue, { color }]}>{value}</Text>
+      <Text style={styles.summaryLabel}>{label}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#1A1A2E",
+  container: { flex: 1, backgroundColor: "#000000" },
+  center: { justifyContent: "center", alignItems: "center", padding: 32 },
+  content: { paddingHorizontal: 16, paddingBottom: 32 },
+  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8 },
+  largeTitle: { color: "#FFFFFF", fontSize: 34, fontWeight: "700", letterSpacing: -0.5 },
+  subtitle: { color: "rgba(235,235,245,0.3)", fontSize: 13, letterSpacing: -0.3, marginBottom: 16 },
+  segmentOuter: {
+    flexDirection: "row", backgroundColor: "#3A3A3C", borderRadius: 8,
+    height: 32, marginBottom: 16, padding: 2, position: "relative",
   },
-  center: {
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 32,
+  segmentIndicator: {
+    position: "absolute", top: 2, height: 28, backgroundColor: "#FFFFFF",
+    borderRadius: 7, shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 2, shadowOffset: { width: 0, height: 1 },
   },
-  content: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  headerText: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  dataPoints: {
-    color: "#8892A4",
-    fontSize: 12,
-  },
-  chartCard: {
-    backgroundColor: "#16213E",
-    borderRadius: 12,
-    padding: 16,
-    marginVertical: 8,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  chartTitle: {
-    color: "#8892A4",
-    fontSize: 12,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    marginBottom: 12,
-  },
-  chart: {
-    borderRadius: 8,
-  },
-  errorText: {
-    color: "#FF4444",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginTop: 12,
-  },
-  emptyText: {
-    color: "#8892A4",
-    fontSize: 16,
-    marginTop: 12,
-  },
-  emptySubtext: {
-    color: "#3A4A5C",
-    fontSize: 13,
-    marginTop: 4,
-    textAlign: "center",
-  },
+  segmentBtn: { flex: 1, justifyContent: "center", alignItems: "center", zIndex: 1 },
+  segmentText: { color: "rgba(235,235,245,0.6)", fontSize: 13, fontWeight: "600", letterSpacing: -0.3 },
+  segmentActive: { color: "#000000" },
+  chartCard: { backgroundColor: "#1C1C1E", borderRadius: 20, padding: 16, marginVertical: 6 },
+  chartTitle: { color: "rgba(235,235,245,0.6)", fontSize: 13, fontWeight: "600", letterSpacing: -0.3, marginBottom: 12 },
+  chart: { borderRadius: 12 },
+  summaryRow: { flexDirection: "row", gap: 8, marginTop: 8 },
+  summaryCard: { flex: 1, backgroundColor: "#1C1C1E", borderRadius: 12, paddingVertical: 14, alignItems: "center" },
+  summaryValue: { fontSize: 20, fontWeight: "700", letterSpacing: -0.5 },
+  summaryLabel: { color: "rgba(235,235,245,0.3)", fontSize: 12, marginTop: 4, letterSpacing: -0.3 },
+  errorText: { color: "#FF453A", fontSize: 17, fontWeight: "700", marginTop: 16 },
+  emptyText: { color: "rgba(235,235,245,0.6)", fontSize: 17, marginTop: 16 },
+  emptySubtext: { color: "rgba(235,235,245,0.3)", fontSize: 15, marginTop: 4, textAlign: "center" },
 });

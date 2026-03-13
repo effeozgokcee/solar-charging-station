@@ -1,72 +1,41 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
-  ScrollView,
-  View,
-  StyleSheet,
-  Alert,
-  TouchableOpacity,
-  Animated,
-  Easing,
+  ScrollView, View, StyleSheet, Alert, TouchableOpacity, Animated, Easing,
 } from "react-native";
-import { Text, Switch, Button, Snackbar } from "react-native-paper";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Text, Switch, Snackbar } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
 import WeatherAnimation from "../components/WeatherAnimation";
 import { useSimulation } from "../hooks/useSimulation";
 
 const SPEED_OPTIONS = [1, 5, 10, 60];
-
 const WEATHER_OPTIONS = [
-  { key: "sunny", label: "Gunesli" },
-  { key: "partly_cloudy", label: "Parcali" },
-  { key: "cloudy", label: "Bulutlu" },
-  { key: "night", label: "Gece" },
+  { key: "sunny", label: "Sunny" },
+  { key: "partly_cloudy", label: "Partly Cloudy" },
+  { key: "cloudy", label: "Cloudy" },
+  { key: "night", label: "Night" },
 ];
 
-function AnimatedButton({
-  children,
-  onPress,
-  selected,
-  style,
-}: {
-  children: React.ReactNode;
-  onPress: () => void;
-  selected: boolean;
-  style?: object;
-}) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-
-  const handlePressIn = () => {
-    Animated.timing(scaleAnim, {
-      toValue: 0.95,
-      duration: 100,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const handlePressOut = () => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 1.05,
-        duration: 80,
-        useNativeDriver: true,
-        easing: Easing.out(Easing.back(2)),
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 120,
-        useNativeDriver: true,
-      }),
+function FadeIn({ delay = 0, children }: { delay?: number; children: React.ReactNode }) {
+  const o = useRef(new Animated.Value(0)).current;
+  const y = useRef(new Animated.Value(20)).current;
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(o, { toValue: 1, tension: 60, friction: 10, delay, useNativeDriver: true }),
+      Animated.spring(y, { toValue: 0, tension: 60, friction: 10, delay, useNativeDriver: true }),
     ]).start();
-  };
+  }, [o, y, delay]);
+  return <Animated.View style={{ opacity: o, transform: [{ translateY: y }] }}>{children}</Animated.View>;
+}
 
+function PressableRow({ children, onPress }: { children: React.ReactNode; onPress: () => void }) {
+  const scale = useRef(new Animated.Value(1)).current;
   return (
-    <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, style]}>
-      <TouchableOpacity
-        onPress={onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        activeOpacity={0.9}
-      >
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <TouchableOpacity activeOpacity={0.8}
+        onPressIn={() => Animated.spring(scale, { toValue: 0.96, tension: 200, friction: 10, useNativeDriver: true }).start()}
+        onPressOut={() => Animated.spring(scale, { toValue: 1, tension: 200, friction: 10, useNativeDriver: true }).start()}
+        onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress(); }}>
         {children}
       </TouchableOpacity>
     </Animated.View>
@@ -81,332 +50,186 @@ export default function ControlScreen() {
   const [snackVisible, setSnackVisible] = useState(false);
   const [snackMessage, setSnackMessage] = useState("");
 
-  const phoneSlide = useRef(new Animated.Value(phoneConnected ? 1 : 0)).current;
-  const speedIndicator = useRef(new Animated.Value(0)).current;
+  const speedSlide = useRef(new Animated.Value(0)).current;
 
-  const showToast = useCallback((msg: string) => {
-    setSnackMessage(msg);
-    setSnackVisible(true);
-  }, []);
+  const toast = useCallback((m: string) => { setSnackMessage(m); setSnackVisible(true); }, []);
 
   const handleWeather = async (w: string) => {
     setWeather(w);
-    try {
-      await sendControl({ weather: w });
-      showToast("Hava durumu guncellendi");
-    } catch {
-      showToast("Hata: baglanti basarisiz");
-    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try { await sendControl({ weather: w }); toast("Weather updated"); } catch { toast("Error: connection failed"); }
   };
 
-  const handlePhone = async (connected: boolean) => {
-    setPhoneConnected(connected);
-    Animated.spring(phoneSlide, {
-      toValue: connected ? 1 : 0,
-      useNativeDriver: true,
-      tension: 40,
-      friction: 7,
-    }).start();
-    try {
-      await sendControl({ phone_connected: connected });
-      showToast(connected ? "Telefon baglandi" : "Telefon ayrildi");
-    } catch {
-      showToast("Hata: baglanti basarisiz");
-    }
+  const handlePhone = async (v: boolean) => {
+    setPhoneConnected(v);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try { await sendControl({ phone_connected: v }); toast(v ? "Phone connected" : "Phone disconnected"); } catch { toast("Error"); }
   };
 
   const handleSpeed = async (s: number) => {
     const idx = SPEED_OPTIONS.indexOf(s);
-    Animated.spring(speedIndicator, {
-      toValue: idx,
-      useNativeDriver: true,
-      tension: 50,
-      friction: 8,
-    }).start();
+    Animated.spring(speedSlide, { toValue: idx, tension: 80, friction: 12, useNativeDriver: true }).start();
     setSpeed(s);
-    try {
-      await sendControl({ speed: s });
-      showToast(`Hiz: ${s}x`);
-    } catch {
-      showToast("Hata: baglanti basarisiz");
-    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try { await sendControl({ speed: s }); toast(`Speed: ${s}x`); } catch { toast("Error"); }
   };
 
   const handleReset = () => {
-    Alert.alert(
-      "Simulasyonu Sifirla",
-      "Tum simulasyon verilerini sifirlamak istediginizden emin misiniz?",
-      [
-        { text: "Iptal", style: "cancel" },
-        {
-          text: "Sifirla",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await resetSimulation();
-              setWeather("sunny");
-              setPhoneConnected(false);
-              setSpeed(1);
-              phoneSlide.setValue(0);
-              speedIndicator.setValue(0);
-              showToast("Simulasyon sifirlandi");
-            } catch {
-              showToast("Hata: sifirlama basarisiz");
-            }
-          },
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    Alert.alert("Reset Simulation", "This will reset all simulation data.", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Reset", style: "destructive",
+        onPress: async () => {
+          try {
+            await resetSimulation();
+            setWeather("sunny"); setPhoneConnected(false); setSpeed(1); speedSlide.setValue(0);
+            toast("Simulation reset");
+          } catch { toast("Error"); }
         },
-      ]
-    );
+      },
+    ]);
   };
 
-  const phoneIconTranslate = phoneSlide.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-20, 0],
-  });
-  const phoneIconOpacity = phoneSlide.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 1],
-  });
+  const segW = (Dimensions_width - 48) / 4;
+  const slideX = speedSlide.interpolate({ inputRange: [0, 1, 2, 3], outputRange: [2, segW + 2, segW * 2 + 2, segW * 3 + 2] });
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Weather Preview */}
-      <View style={styles.weatherPreview}>
-        <WeatherAnimation weather={weather} size={80} />
-      </View>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} bounces>
+        <FadeIn delay={0}>
+          <Text style={styles.largeTitle}>Settings</Text>
+        </FadeIn>
 
-      {/* Weather Selector */}
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Hava Durumu</Text>
-        <View style={styles.weatherRow}>
-          {WEATHER_OPTIONS.map((opt) => (
-            <AnimatedButton
-              key={opt.key}
-              onPress={() => handleWeather(opt.key)}
-              selected={weather === opt.key}
-              style={{ flex: 1 }}
-            >
-              <View style={[styles.weatherBtn, weather === opt.key && styles.weatherBtnSelected]}>
-                <WeatherAnimation weather={opt.key} size={36} />
-                <Text style={[styles.weatherBtnLabel, weather === opt.key && styles.weatherBtnLabelSelected]}>
-                  {opt.label}
-                </Text>
-              </View>
-            </AnimatedButton>
-          ))}
-        </View>
-      </View>
-
-      {/* Phone Toggle */}
-      <View style={styles.card}>
-        <View style={styles.switchRow}>
-          <View style={styles.switchLabel}>
-            <Animated.View
-              style={{
-                transform: [{ translateX: phoneIconTranslate }],
-                opacity: phoneIconOpacity,
-              }}
-            >
-              <MaterialCommunityIcons name="cellphone" size={24} color="#2196F3" />
-            </Animated.View>
-            <Text style={styles.switchText}>Telefon Baglantisi</Text>
+        {/* Weather Preview */}
+        <FadeIn delay={80}>
+          <View style={styles.previewRow}>
+            <WeatherAnimation weather={weather} size={64} />
           </View>
-          <Switch value={phoneConnected} onValueChange={handlePhone} color="#F5A623" />
-        </View>
-        <Text style={styles.switchHint}>
-          {phoneConnected ? "Telefon sarj ediliyor (5W)" : "Telefon bagli degil"}
-        </Text>
-      </View>
+        </FadeIn>
 
-      {/* Speed Selector */}
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Simulasyon Hizi</Text>
-        <View style={styles.speedRow}>
-          {SPEED_OPTIONS.map((s) => (
-            <AnimatedButton
-              key={s}
-              onPress={() => handleSpeed(s)}
-              selected={speed === s}
-              style={{ flex: 1 }}
-            >
-              <View style={[styles.speedBtn, speed === s && styles.speedBtnActive]}>
-                <Text style={[styles.speedBtnText, speed === s && styles.speedBtnTextActive]}>
-                  {s}x
-                </Text>
-              </View>
-            </AnimatedButton>
-          ))}
-        </View>
-        <Text style={styles.switchHint}>Her 2 saniyede {speed} dakika simulasyon ilerler</Text>
-      </View>
-
-      {/* Status */}
-      {status && (
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Mevcut Durum</Text>
-          <View style={styles.statusGrid}>
-            <StatusItem label="Saat" value={status.time} color="#F5A623" />
-            <StatusItem label="Batarya" value={`${status.battery_percent}%`} color="#00C851" />
-            <StatusItem label="Gunes" value={`${status.solar_watts}W`} color="#F5A623" />
-            <StatusItem label="Tuketim" value={`${status.consumption_watts}W`} color="#2196F3" />
+        {/* Weather Section */}
+        <FadeIn delay={160}>
+          <Text style={styles.sectionHeader}>WEATHER</Text>
+          <View style={styles.groupCard}>
+            {WEATHER_OPTIONS.map((opt, i) => (
+              <PressableRow key={opt.key} onPress={() => handleWeather(opt.key)}>
+                <View style={[styles.listRow, i < WEATHER_OPTIONS.length - 1 && styles.listRowBorder]}>
+                  <View style={styles.listRowLeft}>
+                    <WeatherAnimation weather={opt.key} size={28} />
+                    <Text style={styles.listRowText}>{opt.label}</Text>
+                  </View>
+                  {weather === opt.key && <Text style={styles.checkmark}>{"\u2713"}</Text>}
+                </View>
+              </PressableRow>
+            ))}
           </View>
-        </View>
-      )}
+        </FadeIn>
 
-      <Button
-        mode="outlined"
-        onPress={handleReset}
-        style={styles.resetButton}
-        labelStyle={styles.resetLabel}
-        icon="restart"
-      >
-        Simulasyonu Sifirla
-      </Button>
+        {/* Phone Toggle */}
+        <FadeIn delay={240}>
+          <Text style={styles.sectionHeader}>DEVICE</Text>
+          <View style={styles.groupCard}>
+            <View style={styles.listRow}>
+              <View style={styles.listRowLeft}>
+                <Text style={{ fontSize: 20 }}>{"\uD83D\uDCF1"}</Text>
+                <Text style={styles.listRowText}>Phone Connected</Text>
+              </View>
+              <Switch value={phoneConnected} onValueChange={handlePhone} color="#30D158" />
+            </View>
+          </View>
+          <Text style={styles.footnote}>
+            {phoneConnected ? "Phone is charging at 5W via USB" : "No device connected"}
+          </Text>
+        </FadeIn>
 
-      <Snackbar
-        visible={snackVisible}
-        onDismiss={() => setSnackVisible(false)}
-        duration={2000}
-        style={styles.snackbar}
-      >
-        {snackMessage}
-      </Snackbar>
-    </ScrollView>
+        {/* Speed */}
+        <FadeIn delay={320}>
+          <Text style={styles.sectionHeader}>SIMULATION SPEED</Text>
+          <View style={styles.segmentOuter}>
+            <Animated.View style={[styles.segmentIndicator, { transform: [{ translateX: slideX }], width: segW - 4 }]} />
+            {SPEED_OPTIONS.map((s) => (
+              <TouchableOpacity key={s} style={styles.segmentBtn}
+                onPress={() => handleSpeed(s)}>
+                <Text style={[styles.segmentText, speed === s && styles.segmentActive]}>{s}x</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <Text style={styles.footnote}>Every 2 seconds advances {speed} minute(s)</Text>
+        </FadeIn>
+
+        {/* Status */}
+        {status && (
+          <FadeIn delay={400}>
+            <Text style={styles.sectionHeader}>CURRENT STATUS</Text>
+            <View style={styles.groupCard}>
+              <InfoRow label="Time" value={status.time} border />
+              <InfoRow label="Battery" value={`${status.battery_percent}%`} border />
+              <InfoRow label="Solar" value={`${status.solar_watts}W`} border />
+              <InfoRow label="Consumption" value={`${status.consumption_watts}W`} />
+            </View>
+          </FadeIn>
+        )}
+
+        {/* Reset */}
+        <FadeIn delay={480}>
+          <TouchableOpacity style={styles.resetBtn} onPress={handleReset}>
+            <Text style={styles.resetText}>Reset Simulation</Text>
+          </TouchableOpacity>
+        </FadeIn>
+      </ScrollView>
+
+      <Snackbar visible={snackVisible} onDismiss={() => setSnackVisible(false)} duration={2000}
+        style={styles.snackbar}>{snackMessage}</Snackbar>
+    </SafeAreaView>
   );
 }
 
-function StatusItem({ label, value, color }: { label: string; value: string; color: string }) {
+function InfoRow({ label, value, border }: { label: string; value: string; border?: boolean }) {
   return (
-    <View style={styles.statusItem}>
-      <Text style={styles.statusLabel}>{label}</Text>
-      <Text style={[styles.statusValue, { color }]}>{value}</Text>
+    <View style={[styles.listRow, border && styles.listRowBorder]}>
+      <Text style={styles.listRowText}>{label}</Text>
+      <Text style={styles.infoValue}>{value}</Text>
     </View>
   );
 }
 
+// Get screen width for segment sizing
+import { Dimensions } from "react-native";
+const Dimensions_width = Dimensions.get("window").width;
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#1A1A2E",
+  container: { flex: 1, backgroundColor: "#000000" },
+  content: { paddingHorizontal: 16, paddingBottom: 32 },
+  largeTitle: { color: "#FFFFFF", fontSize: 34, fontWeight: "700", letterSpacing: -0.5, marginTop: 8, marginBottom: 8 },
+  previewRow: { alignItems: "center", marginBottom: 8 },
+  sectionHeader: {
+    color: "rgba(235,235,245,0.6)", fontSize: 13, fontWeight: "400",
+    letterSpacing: -0.1, marginTop: 24, marginBottom: 8, marginLeft: 16,
   },
-  content: {
-    padding: 16,
-    paddingBottom: 32,
+  groupCard: { backgroundColor: "#1C1C1E", borderRadius: 12, overflow: "hidden" },
+  listRow: {
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    paddingHorizontal: 16, paddingVertical: 14, minHeight: 44,
   },
-  weatherPreview: {
-    alignItems: "center",
-    marginBottom: 8,
+  listRowBorder: { borderBottomWidth: 0.5, borderBottomColor: "rgba(84,84,88,0.65)" },
+  listRowLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
+  listRowText: { color: "#FFFFFF", fontSize: 17, fontWeight: "400", letterSpacing: -0.3 },
+  checkmark: { color: "#FFD60A", fontSize: 17, fontWeight: "600" },
+  infoValue: { color: "rgba(235,235,245,0.6)", fontSize: 17, letterSpacing: -0.3 },
+  footnote: { color: "rgba(235,235,245,0.3)", fontSize: 13, letterSpacing: -0.3, marginTop: 8, marginLeft: 16 },
+  segmentOuter: {
+    flexDirection: "row", backgroundColor: "#3A3A3C", borderRadius: 8,
+    height: 32, padding: 2, position: "relative",
   },
-  card: {
-    backgroundColor: "#16213E",
-    borderRadius: 12,
-    padding: 16,
-    marginVertical: 8,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+  segmentIndicator: {
+    position: "absolute", top: 2, height: 28, backgroundColor: "#FFFFFF",
+    borderRadius: 7, shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 2, shadowOffset: { width: 0, height: 1 },
   },
-  sectionTitle: {
-    color: "#8892A4",
-    fontSize: 12,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    marginBottom: 12,
-  },
-  weatherRow: {
-    flexDirection: "row",
-    gap: 6,
-  },
-  weatherBtn: {
-    alignItems: "center",
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "transparent",
-    backgroundColor: "#1A1A2E",
-  },
-  weatherBtnSelected: {
-    borderColor: "#F5A623",
-    backgroundColor: "#1E2D50",
-  },
-  weatherBtnLabel: {
-    color: "#8892A4",
-    fontSize: 10,
-    marginTop: 4,
-  },
-  weatherBtnLabelSelected: {
-    color: "#F5A623",
-    fontWeight: "bold",
-  },
-  switchRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  switchLabel: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  switchText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-  },
-  switchHint: {
-    color: "#3A4A5C",
-    fontSize: 12,
-    marginTop: 8,
-  },
-  speedRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  speedBtn: {
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: "#F5A623",
-    alignItems: "center",
-  },
-  speedBtnActive: {
-    backgroundColor: "#F5A623",
-  },
-  speedBtnText: {
-    color: "#F5A623",
-    fontSize: 15,
-    fontWeight: "bold",
-  },
-  speedBtnTextActive: {
-    color: "#1A1A2E",
-  },
-  statusGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  statusItem: {
-    width: "50%",
-    paddingVertical: 8,
-  },
-  statusLabel: {
-    color: "#8892A4",
-    fontSize: 11,
-    textTransform: "uppercase",
-  },
-  statusValue: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginTop: 2,
-  },
-  resetButton: {
-    marginTop: 16,
-    borderColor: "#FF4444",
-  },
-  resetLabel: {
-    color: "#FF4444",
-  },
-  snackbar: {
-    backgroundColor: "#16213E",
-  },
+  segmentBtn: { flex: 1, justifyContent: "center", alignItems: "center", zIndex: 1 },
+  segmentText: { color: "rgba(235,235,245,0.6)", fontSize: 13, fontWeight: "600", letterSpacing: -0.3 },
+  segmentActive: { color: "#000000" },
+  resetBtn: { marginTop: 32, alignItems: "center", paddingVertical: 14 },
+  resetText: { color: "#FF453A", fontSize: 17, fontWeight: "400", letterSpacing: -0.3 },
+  snackbar: { backgroundColor: "#1C1C1E" },
 });

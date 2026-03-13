@@ -2,8 +2,6 @@ import React, { useEffect, useRef, memo } from "react";
 import { View, Animated, StyleSheet, Easing } from "react-native";
 import Svg, { Circle, Line, Ellipse, Rect } from "react-native-svg";
 
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-
 interface WeatherAnimationProps {
   weather: string;
   size?: number;
@@ -16,7 +14,7 @@ function SunnyAnimation({ size }: { size: number }) {
     const anim = Animated.loop(
       Animated.timing(rotation, {
         toValue: 1,
-        duration: 8000,
+        duration: 10000,
         easing: Easing.linear,
         useNativeDriver: true,
       })
@@ -30,106 +28,28 @@ function SunnyAnimation({ size }: { size: number }) {
     outputRange: ["0deg", "360deg"],
   });
 
-  const center = size / 2;
-  const sunR = size * 0.18;
-  const rayLen = size * 0.12;
-  const rayDist = size * 0.32;
+  const c = size / 2;
+  const r = size * 0.16;
 
   return (
-    <View style={[styles.container, { width: size, height: size }]}>
+    <View style={[styles.box, { width: size, height: size }]}>
       <Svg width={size} height={size}>
-        <Circle cx={center} cy={center} r={sunR} fill="#F5A623" opacity={0.3} />
-        <Circle cx={center} cy={center} r={sunR * 0.85} fill="#F5A623" opacity={0.6} />
-        <Circle cx={center} cy={center} r={sunR * 0.7} fill="#FFD93D" />
+        <Circle cx={c} cy={c} r={r * 1.4} fill="#FFD60A" opacity={0.15} />
+        <Circle cx={c} cy={c} r={r * 1.1} fill="#FFD60A" opacity={0.3} />
+        <Circle cx={c} cy={c} r={r} fill="#FFD60A" />
       </Svg>
-      <Animated.View
-        style={[
-          StyleSheet.absoluteFill,
-          { transform: [{ rotate: spin }] },
-        ]}
-      >
-        <Svg width={size} height={size}>
-          {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => {
-            const rad = (angle * Math.PI) / 180;
-            const x1 = center + Math.cos(rad) * (sunR + 4);
-            const y1 = center + Math.sin(rad) * (sunR + 4);
-            const x2 = center + Math.cos(rad) * (sunR + rayLen);
-            const y2 = center + Math.sin(rad) * (sunR + rayLen);
-            return (
-              <Line
-                key={angle}
-                x1={x1}
-                y1={y1}
-                x2={x2}
-                y2={y2}
-                stroke="#F5A623"
-                strokeWidth={2.5}
-                strokeLinecap="round"
-              />
-            );
-          })}
-        </Svg>
-      </Animated.View>
-    </View>
-  );
-}
-
-function CloudShape({ cx, cy, scale, color }: { cx: number; cy: number; scale: number; color: string }) {
-  return (
-    <>
-      <Ellipse cx={cx} cy={cy} rx={20 * scale} ry={14 * scale} fill={color} />
-      <Ellipse cx={cx - 14 * scale} cy={cy + 4 * scale} rx={14 * scale} ry={10 * scale} fill={color} />
-      <Ellipse cx={cx + 14 * scale} cy={cy + 4 * scale} rx={16 * scale} ry={10 * scale} fill={color} />
-      <Rect
-        x={cx - 20 * scale}
-        y={cy}
-        width={40 * scale}
-        height={12 * scale}
-        fill={color}
-        rx={4}
-      />
-    </>
-  );
-}
-
-function PartlyCloudyAnimation({ size }: { size: number }) {
-  const cloudX = useRef(new Animated.Value(0)).current;
-  const rotation = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const cloudAnim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(cloudX, { toValue: 8, duration: 3000, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
-        Animated.timing(cloudX, { toValue: -8, duration: 3000, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
-      ])
-    );
-    const sunAnim = Animated.loop(
-      Animated.timing(rotation, { toValue: 1, duration: 10000, easing: Easing.linear, useNativeDriver: true })
-    );
-    cloudAnim.start();
-    sunAnim.start();
-    return () => { cloudAnim.stop(); sunAnim.stop(); };
-  }, [cloudX, rotation]);
-
-  const spin = rotation.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] });
-  const center = size / 2;
-
-  return (
-    <View style={[styles.container, { width: size, height: size }]}>
       <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ rotate: spin }] }]}>
         <Svg width={size} height={size}>
-          <Circle cx={center - 10} cy={center - 12} r={size * 0.13} fill="#FFD93D" />
-          {[0, 60, 120, 180, 240, 300].map((angle) => {
-            const rad = (angle * Math.PI) / 180;
-            const r = size * 0.13;
+          {[0, 45, 90, 135, 180, 225, 270, 315].map((a) => {
+            const rad = (a * Math.PI) / 180;
             return (
               <Line
-                key={angle}
-                x1={center - 10 + Math.cos(rad) * (r + 3)}
-                y1={center - 12 + Math.sin(rad) * (r + 3)}
-                x2={center - 10 + Math.cos(rad) * (r + 8)}
-                y2={center - 12 + Math.sin(rad) * (r + 8)}
-                stroke="#F5A623"
+                key={a}
+                x1={c + Math.cos(rad) * (r + 5)}
+                y1={c + Math.sin(rad) * (r + 5)}
+                x2={c + Math.cos(rad) * (r + size * 0.12)}
+                y2={c + Math.sin(rad) * (r + size * 0.12)}
+                stroke="#FFD60A"
                 strokeWidth={2}
                 strokeLinecap="round"
               />
@@ -137,9 +57,57 @@ function PartlyCloudyAnimation({ size }: { size: number }) {
           })}
         </Svg>
       </Animated.View>
+    </View>
+  );
+}
+
+function CloudEl({ cx, cy, s, color }: { cx: number; cy: number; s: number; color: string }) {
+  return (
+    <>
+      <Ellipse cx={cx} cy={cy} rx={18 * s} ry={12 * s} fill={color} />
+      <Ellipse cx={cx - 12 * s} cy={cy + 4 * s} rx={12 * s} ry={9 * s} fill={color} />
+      <Ellipse cx={cx + 12 * s} cy={cy + 4 * s} rx={14 * s} ry={9 * s} fill={color} />
+      <Rect x={cx - 18 * s} y={cy} width={36 * s} height={10 * s} fill={color} rx={3} />
+    </>
+  );
+}
+
+function PartlyCloudyAnimation({ size }: { size: number }) {
+  const cloudX = useRef(new Animated.Value(0)).current;
+  const sunRotation = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const c = Animated.loop(Animated.sequence([
+      Animated.timing(cloudX, { toValue: 6, duration: 3500, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
+      Animated.timing(cloudX, { toValue: -6, duration: 3500, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
+    ]));
+    const s = Animated.loop(Animated.timing(sunRotation, { toValue: 1, duration: 12000, easing: Easing.linear, useNativeDriver: true }));
+    c.start(); s.start();
+    return () => { c.stop(); s.stop(); };
+  }, [cloudX, sunRotation]);
+
+  const spin = sunRotation.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] });
+  const cx = size / 2;
+
+  return (
+    <View style={[styles.box, { width: size, height: size }]}>
+      <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ rotate: spin }] }]}>
+        <Svg width={size} height={size}>
+          <Circle cx={cx - 8} cy={cx - 10} r={size * 0.11} fill="#FFD60A" />
+          {[0, 72, 144, 216, 288].map((a) => {
+            const rad = (a * Math.PI) / 180;
+            const rr = size * 0.11;
+            return (
+              <Line key={a} x1={cx - 8 + Math.cos(rad) * (rr + 3)} y1={cx - 10 + Math.sin(rad) * (rr + 3)}
+                x2={cx - 8 + Math.cos(rad) * (rr + 7)} y2={cx - 10 + Math.sin(rad) * (rr + 7)}
+                stroke="#FFD60A" strokeWidth={1.5} strokeLinecap="round" />
+            );
+          })}
+        </Svg>
+      </Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateX: cloudX }] }]}>
         <Svg width={size} height={size}>
-          <CloudShape cx={center + 8} cy={center + 8} scale={1.2} color="rgba(255,255,255,0.9)" />
+          <CloudEl cx={cx + 6} cy={cx + 6} s={1.1} color="rgba(235,235,245,0.85)" />
         </Svg>
       </Animated.View>
     </View>
@@ -147,38 +115,33 @@ function PartlyCloudyAnimation({ size }: { size: number }) {
 }
 
 function CloudyAnimation({ size }: { size: number }) {
-  const cloud1X = useRef(new Animated.Value(0)).current;
-  const cloud2X = useRef(new Animated.Value(0)).current;
+  const c1 = useRef(new Animated.Value(0)).current;
+  const c2 = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const a1 = Animated.loop(
-      Animated.sequence([
-        Animated.timing(cloud1X, { toValue: 10, duration: 4000, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
-        Animated.timing(cloud1X, { toValue: -10, duration: 4000, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
-      ])
-    );
-    const a2 = Animated.loop(
-      Animated.sequence([
-        Animated.timing(cloud2X, { toValue: -8, duration: 5000, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
-        Animated.timing(cloud2X, { toValue: 8, duration: 5000, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
-      ])
-    );
+    const a1 = Animated.loop(Animated.sequence([
+      Animated.timing(c1, { toValue: 8, duration: 4500, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
+      Animated.timing(c1, { toValue: -8, duration: 4500, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
+    ]));
+    const a2 = Animated.loop(Animated.sequence([
+      Animated.timing(c2, { toValue: -6, duration: 5500, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
+      Animated.timing(c2, { toValue: 6, duration: 5500, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
+    ]));
     a1.start(); a2.start();
     return () => { a1.stop(); a2.stop(); };
-  }, [cloud1X, cloud2X]);
+  }, [c1, c2]);
 
-  const center = size / 2;
-
+  const cx = size / 2;
   return (
-    <View style={[styles.container, { width: size, height: size }]}>
-      <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateX: cloud1X }] }]}>
+    <View style={[styles.box, { width: size, height: size }]}>
+      <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateX: c1 }] }]}>
         <Svg width={size} height={size}>
-          <CloudShape cx={center - 10} cy={center - 8} scale={1.3} color="#8892A4" />
+          <CloudEl cx={cx - 8} cy={cx - 6} s={1.2} color="rgba(174,174,178,0.7)" />
         </Svg>
       </Animated.View>
-      <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateX: cloud2X }] }]}>
+      <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateX: c2 }] }]}>
         <Svg width={size} height={size}>
-          <CloudShape cx={center + 12} cy={center + 10} scale={1.0} color="#6B7A8D" />
+          <CloudEl cx={cx + 10} cy={cx + 8} s={0.9} color="rgba(142,142,147,0.6)" />
         </Svg>
       </Animated.View>
     </View>
@@ -187,49 +150,38 @@ function CloudyAnimation({ size }: { size: number }) {
 
 function NightAnimation({ size }: { size: number }) {
   const stars = useRef(
-    Array.from({ length: 12 }, () => ({
+    Array.from({ length: 10 }, () => ({
       x: Math.random() * size,
       y: Math.random() * size,
-      r: 1 + Math.random() * 1.5,
+      r: 1 + Math.random() * 1.2,
       anim: new Animated.Value(Math.random()),
     }))
   ).current;
 
   useEffect(() => {
-    const anims = stars.map((star) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(star.anim, { toValue: 0.2, duration: 800 + Math.random() * 1200, useNativeDriver: true }),
-          Animated.timing(star.anim, { toValue: 1, duration: 800 + Math.random() * 1200, useNativeDriver: true }),
-        ])
-      )
+    const anims = stars.map((s) =>
+      Animated.loop(Animated.sequence([
+        Animated.timing(s.anim, { toValue: 0.15, duration: 900 + Math.random() * 1000, useNativeDriver: true }),
+        Animated.timing(s.anim, { toValue: 1, duration: 900 + Math.random() * 1000, useNativeDriver: true }),
+      ]))
     );
     anims.forEach((a) => a.start());
     return () => anims.forEach((a) => a.stop());
   }, [stars]);
 
-  const center = size / 2;
-
+  const cx = size / 2;
   return (
-    <View style={[styles.container, { width: size, height: size }]}>
+    <View style={[styles.box, { width: size, height: size }]}>
       <Svg width={size} height={size}>
-        <Circle cx={center} cy={center} r={size * 0.16} fill="#C5CAE9" opacity={0.9} />
-        <Circle cx={center - size * 0.06} cy={center - size * 0.04} r={size * 0.13} fill="#1A1A2E" />
+        <Circle cx={cx} cy={cx} r={size * 0.15} fill="rgba(209,209,214,0.9)" />
+        <Circle cx={cx - size * 0.05} cy={cx - size * 0.04} r={size * 0.12} fill="#000000" />
       </Svg>
-      {stars.map((star, i) => (
-        <Animated.View
-          key={i}
-          style={{
-            position: "absolute",
-            left: star.x,
-            top: star.y,
-            width: star.r * 2,
-            height: star.r * 2,
-            borderRadius: star.r,
-            backgroundColor: "#FFFFFF",
-            opacity: star.anim,
-          }}
-        />
+      {stars.map((s, i) => (
+        <Animated.View key={i} style={{
+          position: "absolute", left: s.x, top: s.y,
+          width: s.r * 2, height: s.r * 2, borderRadius: s.r,
+          backgroundColor: "#FFFFFF", opacity: s.anim,
+        }} />
       ))}
     </View>
   );
@@ -237,24 +189,16 @@ function NightAnimation({ size }: { size: number }) {
 
 function WeatherAnimation({ weather, size = 120 }: WeatherAnimationProps) {
   switch (weather) {
-    case "sunny":
-      return <SunnyAnimation size={size} />;
-    case "partly_cloudy":
-      return <PartlyCloudyAnimation size={size} />;
-    case "cloudy":
-      return <CloudyAnimation size={size} />;
-    case "night":
-      return <NightAnimation size={size} />;
-    default:
-      return <SunnyAnimation size={size} />;
+    case "sunny": return <SunnyAnimation size={size} />;
+    case "partly_cloudy": return <PartlyCloudyAnimation size={size} />;
+    case "cloudy": return <CloudyAnimation size={size} />;
+    case "night": return <NightAnimation size={size} />;
+    default: return <SunnyAnimation size={size} />;
   }
 }
 
 export default memo(WeatherAnimation);
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  box: { alignItems: "center", justifyContent: "center" },
 });

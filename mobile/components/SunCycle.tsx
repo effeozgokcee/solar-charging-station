@@ -1,102 +1,88 @@
 import React, { useEffect, useRef, memo } from "react";
 import { View, Animated, StyleSheet } from "react-native";
-import Svg, { Path, Circle, Defs, LinearGradient, Stop, Line, Text as SvgText } from "react-native-svg";
+import Svg, { Path, Circle, Defs, LinearGradient, Stop, Text as SvgText } from "react-native-svg";
 
 interface SunCycleProps {
   time: string;
 }
 
-function timeToHour(time: string): number {
-  const parts = time.split(":");
-  return parseInt(parts[0], 10) + parseInt(parts[1], 10) / 60;
+function timeToHour(t: string): number {
+  const p = t.split(":");
+  return parseInt(p[0], 10) + parseInt(p[1], 10) / 60;
 }
 
-function getSkyColors(hour: number): [string, string] {
-  if (hour < 5 || hour > 20) return ["#0D1B2A", "#1A1A2E"];
-  if (hour < 7) return ["#FF6B35", "#1A1A2E"];
-  if (hour < 8) return ["#FF8C42", "#4A90D9"];
-  if (hour < 17) return ["#4A90D9", "#87CEEB"];
-  if (hour < 19) return ["#FF6B35", "#4A2C7A"];
-  return ["#2C1654", "#0D1B2A"];
+function getSkyColors(h: number): [string, string] {
+  if (h < 5 || h > 20) return ["#000000", "#0D0D0D"];
+  if (h < 7) return ["#1A0A00", "#000000"];
+  if (h < 8) return ["#1A1000", "#0A0A14"];
+  if (h < 17) return ["#0A1628", "#000000"];
+  if (h < 19) return ["#1A0A14", "#000000"];
+  return ["#0A0A14", "#000000"];
 }
 
 function SunCycle({ time }: SunCycleProps) {
   const hour = timeToHour(time);
   const isDaytime = hour >= 6 && hour <= 18;
+  const w = 340;
+  const h = 180;
+  const cx = w / 2;
+  const arcR = 135;
+  const baseY = h - 24;
 
-  const width = 320;
-  const height = 160;
-  const cx = width / 2;
-  const arcRadius = 130;
-  const baseY = height - 20;
-
-  const animX = useRef(new Animated.Value(0)).current;
-  const animY = useRef(new Animated.Value(0)).current;
+  const posX = useRef(new Animated.Value(cx)).current;
+  const posY = useRef(new Animated.Value(baseY)).current;
 
   useEffect(() => {
-    let targetX: number;
-    let targetY: number;
-
+    let tx: number, ty: number;
     if (isDaytime) {
-      const progress = (hour - 6) / 12;
-      const angle = Math.PI * (1 - progress);
-      targetX = cx + arcRadius * Math.cos(angle);
-      targetY = baseY - arcRadius * Math.sin(angle);
+      const p = (hour - 6) / 12;
+      const a = Math.PI * (1 - p);
+      tx = cx + arcR * Math.cos(a);
+      ty = baseY - arcR * Math.sin(a);
     } else {
-      const nightProgress = hour >= 18 ? (hour - 18) / 12 : (hour + 6) / 12;
-      targetX = cx + arcRadius * Math.cos(Math.PI * nightProgress);
-      targetY = baseY + 20;
+      tx = cx;
+      ty = baseY + 10;
     }
-
     Animated.parallel([
-      Animated.spring(animX, { toValue: targetX, useNativeDriver: true, tension: 20, friction: 8 }),
-      Animated.spring(animY, { toValue: targetY, useNativeDriver: true, tension: 20, friction: 8 }),
+      Animated.spring(posX, { toValue: tx, tension: 40, friction: 8, useNativeDriver: true }),
+      Animated.spring(posY, { toValue: ty, tension: 40, friction: 8, useNativeDriver: true }),
     ]).start();
-  }, [hour, isDaytime, animX, animY, cx, arcRadius, baseY]);
+  }, [hour, isDaytime, posX, posY, cx, arcR, baseY]);
 
   const [skyTop, skyBottom] = getSkyColors(hour);
-
-  const arcPath = `M ${cx - arcRadius} ${baseY} A ${arcRadius} ${arcRadius} 0 0 1 ${cx + arcRadius} ${baseY}`;
+  const arcPath = `M ${cx - arcR} ${baseY} A ${arcR} ${arcR} 0 0 1 ${cx + arcR} ${baseY}`;
 
   return (
     <View style={styles.container}>
-      <Svg width={width} height={height}>
+      <Svg width={w} height={h}>
         <Defs>
-          <LinearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+          <LinearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor={skyTop} />
             <Stop offset="1" stopColor={skyBottom} />
           </LinearGradient>
         </Defs>
-
-        <Path d={`M 0 0 H ${width} V ${height} H 0 Z`} fill="url(#skyGrad)" rx={12} />
-        <Path d={arcPath} stroke="#8892A4" strokeWidth={1.5} fill="none" strokeDasharray="4,4" opacity={0.4} />
-        <Line x1={cx - arcRadius} y1={baseY} x2={cx + arcRadius} y2={baseY} stroke="#8892A4" strokeWidth={1} opacity={0.3} />
-
-        <SvgText x={cx - arcRadius + 5} y={baseY + 14} fill="#8892A4" fontSize={10}>06:00</SvgText>
-        <SvgText x={cx - 10} y={baseY - arcRadius - 5} fill="#8892A4" fontSize={10}>12:00</SvgText>
-        <SvgText x={cx + arcRadius - 30} y={baseY + 14} fill="#8892A4" fontSize={10}>18:00</SvgText>
+        <Path d={`M 0 0 H ${w} V ${h} H 0 Z`} fill="url(#sky)" rx={20} />
+        <Path d={arcPath} stroke="rgba(255,255,255,0.08)" strokeWidth={1.5} fill="none" strokeDasharray="4,6" />
+        <SvgText x={cx - arcR + 8} y={baseY + 14} fill="rgba(235,235,245,0.3)" fontSize={11} fontWeight="400">6 AM</SvgText>
+        <SvgText x={cx - 10} y={baseY - arcR - 6} fill="rgba(235,235,245,0.3)" fontSize={11} fontWeight="400">12 PM</SvgText>
+        <SvgText x={cx + arcR - 32} y={baseY + 14} fill="rgba(235,235,245,0.3)" fontSize={11} fontWeight="400">6 PM</SvgText>
       </Svg>
-
-      <Animated.View
-        style={[
-          styles.celestialBody,
-          {
-            transform: [
-              { translateX: Animated.subtract(animX, new Animated.Value(14)) },
-              { translateY: Animated.subtract(animY, new Animated.Value(14)) },
-            ],
-          },
-        ]}
-      >
+      <Animated.View style={[styles.body, {
+        transform: [
+          { translateX: Animated.subtract(posX, new Animated.Value(16)) },
+          { translateY: Animated.subtract(posY, new Animated.Value(16)) },
+        ],
+      }]}>
         {isDaytime ? (
-          <Svg width={28} height={28}>
-            <Circle cx={14} cy={14} r={10} fill="#FFD93D" />
-            <Circle cx={14} cy={14} r={13} fill="#F5A623" opacity={0.2} />
+          <Svg width={32} height={32}>
+            <Circle cx={16} cy={16} r={14} fill="#FFD60A" opacity={0.15} />
+            <Circle cx={16} cy={16} r={10} fill="#FFD60A" opacity={0.4} />
+            <Circle cx={16} cy={16} r={7} fill="#FFD60A" />
           </Svg>
         ) : (
-          <Svg width={28} height={28}>
-            <Circle cx={14} cy={14} r={10} fill="#C5CAE9" opacity={0.9} />
-            <Circle cx={10} cy={11} r={8} fill={skyTop} />
+          <Svg width={32} height={32}>
+            <Circle cx={16} cy={16} r={9} fill="rgba(209,209,214,0.8)" />
+            <Circle cx={12} cy={13} r={7} fill={skyTop} />
           </Svg>
         )}
       </Animated.View>
@@ -107,15 +93,6 @@ function SunCycle({ time }: SunCycleProps) {
 export default memo(SunCycle);
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: "center",
-    marginVertical: 8,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  celestialBody: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-  },
+  container: { alignItems: "center", marginVertical: 8, borderRadius: 20, overflow: "hidden" },
+  body: { position: "absolute", top: 0, left: 0 },
 });

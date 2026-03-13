@@ -4,168 +4,105 @@ import Svg, { Rect, Path, Text as SvgText, Defs, LinearGradient, Stop } from "re
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
-interface AnimatedBatteryProps {
+interface Props {
   percent: number;
   chargingStatus: "charging" | "discharging" | "idle";
 }
 
-function getBatteryColor(percent: number): string {
-  if (percent > 60) return "#00C851";
-  if (percent > 20) return "#F5A623";
-  return "#FF4444";
+function getColor(p: number): string {
+  if (p > 60) return "#30D158";
+  if (p > 20) return "#FF9F0A";
+  return "#FF453A";
 }
 
-function AnimatedBattery({ percent, chargingStatus }: AnimatedBatteryProps) {
+function AnimatedBattery({ percent, chargingStatus }: Props) {
+  // SEPARATE values: fillAnim for layout (non-native), pulseScale/glowOpacity for transforms (native)
   const fillAnim = useRef(new Animated.Value(percent)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const glowAnim = useRef(new Animated.Value(0)).current;
+  const pulseScale = useRef(new Animated.Value(1)).current;
+  const glowOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(fillAnim, {
       toValue: percent,
-      duration: 800,
+      duration: 600,
       easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
+      useNativeDriver: false, // layout prop - must be false
     }).start();
   }, [percent, fillAnim]);
 
   useEffect(() => {
     if (chargingStatus === "charging") {
-      const pulse = Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 0.92, duration: 1000, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
-          Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
-        ])
-      );
-      const glow = Animated.loop(
-        Animated.sequence([
-          Animated.timing(glowAnim, { toValue: 1, duration: 1200, useNativeDriver: false, easing: Easing.inOut(Easing.sin) }),
-          Animated.timing(glowAnim, { toValue: 0, duration: 1200, useNativeDriver: false, easing: Easing.inOut(Easing.sin) }),
-        ])
-      );
-      pulse.start();
-      glow.start();
+      const pulse = Animated.loop(Animated.sequence([
+        Animated.timing(pulseScale, { toValue: 0.96, duration: 1200, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
+        Animated.timing(pulseScale, { toValue: 1, duration: 1200, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
+      ]));
+      const glow = Animated.loop(Animated.sequence([
+        Animated.timing(glowOpacity, { toValue: 0.6, duration: 1400, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
+        Animated.timing(glowOpacity, { toValue: 0.1, duration: 1400, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
+      ]));
+      pulse.start(); glow.start();
       return () => { pulse.stop(); glow.stop(); };
     } else {
-      pulseAnim.setValue(1);
-      glowAnim.setValue(0);
+      pulseScale.setValue(1);
+      glowOpacity.setValue(0);
     }
-  }, [chargingStatus, pulseAnim, glowAnim]);
+  }, [chargingStatus, pulseScale, glowOpacity]);
 
-  const color = getBatteryColor(percent);
+  const color = getColor(percent);
+  const bw = 100, bh = 180;
+  const bx = 15, by = 24;
+  const bW = bw - 30, bH = bh - 36;
+  const tipW = 28, tipH = 12;
+  const pad = 5;
+  const maxFill = bH - pad * 2;
 
-  const batteryW = 80;
-  const batteryH = 140;
-  const bodyX = 10;
-  const bodyY = 20;
-  const bodyW = batteryW - 20;
-  const bodyH = batteryH - 30;
-  const tipW = 24;
-  const tipH = 10;
-  const fillPadding = 4;
-  const maxFillH = bodyH - fillPadding * 2;
-
-  const fillHeight = fillAnim.interpolate({
-    inputRange: [0, 100],
-    outputRange: [0, maxFillH],
-    extrapolate: "clamp",
-  });
-
-  const fillY = fillAnim.interpolate({
-    inputRange: [0, 100],
-    outputRange: [bodyY + bodyH - fillPadding, bodyY + fillPadding],
-    extrapolate: "clamp",
-  });
-
-  const shadowRadius = glowAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 20],
-  });
-
-  const shadowOpacity = glowAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 0.6],
-  });
+  const fillH = fillAnim.interpolate({ inputRange: [0, 100], outputRange: [0, maxFill], extrapolate: "clamp" });
+  const fillY = fillAnim.interpolate({ inputRange: [0, 100], outputRange: [by + bH - pad, by + pad], extrapolate: "clamp" });
 
   return (
     <View style={styles.wrapper}>
-      <Animated.View
-        style={[
-          styles.glowContainer,
-          {
-            shadowColor: color,
-            shadowRadius: shadowRadius,
-            shadowOpacity: shadowOpacity,
-            elevation: chargingStatus === "charging" ? 10 : 0,
-            transform: [{ scale: pulseAnim }],
-          },
-        ]}
-      >
-        <Svg width={batteryW} height={batteryH}>
+      {/* Glow ring - uses only native-driver-compatible props */}
+      <Animated.View style={[styles.glowRing, {
+        opacity: glowOpacity,
+        borderColor: color,
+      }]} />
+
+      <Animated.View style={{ transform: [{ scale: pulseScale }] }}>
+        <Svg width={bw} height={bh}>
           <Defs>
-            <LinearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor={color} stopOpacity="1" />
-              <Stop offset="1" stopColor={color} stopOpacity="0.6" />
+            <LinearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={color} stopOpacity="0.9" />
+              <Stop offset="1" stopColor={color} stopOpacity="0.5" />
             </LinearGradient>
           </Defs>
 
-          <Rect
-            x={(batteryW - tipW) / 2}
-            y={bodyY - tipH + 2}
-            width={tipW}
-            height={tipH}
-            rx={3}
-            fill="#3A4A5C"
-          />
-          <Rect
-            x={bodyX}
-            y={bodyY}
-            width={bodyW}
-            height={bodyH}
-            rx={8}
-            fill="none"
-            stroke="#3A4A5C"
-            strokeWidth={3}
-          />
+          <Rect x={(bw - tipW) / 2} y={by - tipH + 3} width={tipW} height={tipH} rx={4} fill="#3A3A3C" />
+          <Rect x={bx} y={by} width={bW} height={bH} rx={10} fill="none" stroke="#3A3A3C" strokeWidth={2.5} />
 
-          <AnimatedRect
-            x={bodyX + fillPadding}
-            y={fillY}
-            width={bodyW - fillPadding * 2}
-            height={fillHeight}
-            rx={4}
-            fill="url(#fillGrad)"
-          />
+          <AnimatedRect x={bx + pad} y={fillY} width={bW - pad * 2} height={fillH} rx={6} fill="url(#fill)" />
 
           {chargingStatus === "charging" && (
-            <Path
-              d="M 38 55 L 32 75 L 38 75 L 34 95 L 48 70 L 42 70 L 46 55 Z"
-              fill="#FFFFFF"
-              opacity={0.9}
-            />
+            <Path d="M 48 65 L 40 90 L 48 90 L 42 115 L 60 82 L 52 82 L 58 65 Z" fill="rgba(255,255,255,0.85)" />
           )}
 
-          <SvgText
-            x={batteryW / 2}
-            y={bodyY + bodyH / 2 + (chargingStatus === "charging" ? 22 : 5)}
-            fill="#FFFFFF"
-            fontSize={14}
-            fontWeight="bold"
-            textAnchor="middle"
-          >
+          <SvgText x={bw / 2} y={chargingStatus === "charging" ? by + bH / 2 + 30 : by + bH / 2 + 6}
+            fill="#FFFFFF" fontSize={18} fontWeight="700" textAnchor="middle" letterSpacing={-0.5}>
             {percent.toFixed(1)}%
           </SvgText>
         </Svg>
       </Animated.View>
 
-      <Animated.Text
-        style={[
-          styles.statusText,
-          { color: chargingStatus === "charging" ? "#00C851" : chargingStatus === "discharging" ? "#FF4444" : "#8892A4" },
-        ]}
-      >
-        {chargingStatus === "charging" ? "Sarj Ediliyor" : chargingStatus === "discharging" ? "Desarj Oluyor" : "Bosta"}
-      </Animated.Text>
+      <View style={[styles.statusBadge, {
+        backgroundColor: chargingStatus === "charging" ? "rgba(48,209,88,0.15)" :
+          chargingStatus === "discharging" ? "rgba(255,69,58,0.15)" : "rgba(142,142,147,0.1)",
+      }]}>
+        <Animated.Text style={[styles.statusText, {
+          color: chargingStatus === "charging" ? "#30D158" :
+            chargingStatus === "discharging" ? "#FF453A" : "rgba(235,235,245,0.3)",
+        }]}>
+          {chargingStatus === "charging" ? "Charging" : chargingStatus === "discharging" ? "Discharging" : "Idle"}
+        </Animated.Text>
+      </View>
     </View>
   );
 }
@@ -173,17 +110,24 @@ function AnimatedBattery({ percent, chargingStatus }: AnimatedBatteryProps) {
 export default memo(AnimatedBattery);
 
 const styles = StyleSheet.create({
-  wrapper: {
-    alignItems: "center",
-    paddingVertical: 8,
+  wrapper: { alignItems: "center", paddingVertical: 8 },
+  glowRing: {
+    position: "absolute",
+    width: 120,
+    height: 200,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    top: 0,
   },
-  glowContainer: {
-    shadowOffset: { width: 0, height: 0 },
+  statusBadge: {
+    marginTop: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 14,
   },
   statusText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
-    marginTop: 8,
-    letterSpacing: 1,
+    letterSpacing: -0.3,
   },
 });
