@@ -8,6 +8,8 @@
     "userInterfaceStyle": "dark",
     "scheme": "solar-charging-station",
     "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
       "backgroundColor": "#1A1A2E"
     },
     "ios": {
@@ -15,8 +17,12 @@
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1A1A2E"
       }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
     },
     "plugins": ["expo-router"]
   }
