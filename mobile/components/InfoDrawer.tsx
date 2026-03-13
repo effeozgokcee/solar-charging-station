@@ -1,4 +1,3 @@
-// -*- coding: utf-8 -*-
 import React, { useEffect, useRef, memo } from "react";
 import {
   View, StyleSheet, Animated, TouchableWithoutFeedback,
@@ -78,16 +77,16 @@ function InfoDrawer({ visible, content, onClose }: Props) {
             <Text style={styles.title}>{content.title}</Text>
 
             <View style={styles.unitRow}>
-              <Text style={styles.unitLabel}>Birim</Text>
+              <Text style={styles.unitLabel}>Unit</Text>
               <Text style={styles.unitValue}>{content.unit}</Text>
             </View>
 
             <View style={styles.formulaCard}>
-              <Text style={styles.formulaLabel}>FORM\u00DCL</Text>
+              <Text style={styles.formulaLabel}>FORMULA</Text>
               <Text style={styles.formulaText}>{content.formula}</Text>
             </View>
 
-            <Text style={styles.sectionLabel}>A\u00C7IKLAMA</Text>
+            <Text style={styles.sectionLabel}>DESCRIPTION</Text>
             <Text style={styles.explanation}>{content.explanation}</Text>
 
             <View style={styles.funFactCard}>

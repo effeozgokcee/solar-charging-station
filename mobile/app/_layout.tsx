@@ -1,4 +1,3 @@
-// -*- coding: utf-8 -*-
 import { Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { View, Text } from "react-native";
@@ -30,7 +29,7 @@ export default function Layout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: "Ana Ekran",
+            title: "Dashboard",
             headerShown: false,
             tabBarIcon: ({ color }) => <TabIcon label={"\u2600\uFE0F"} color={color} />,
           }}
@@ -38,7 +37,7 @@ export default function Layout() {
         <Tabs.Screen
           name="history"
           options={{
-            title: "Ge\u00E7mi\u015F",
+            title: "History",
             headerShown: false,
             tabBarIcon: ({ color }) => <TabIcon label={"\uD83D\uDCC8"} color={color} />,
           }}
@@ -46,7 +45,7 @@ export default function Layout() {
         <Tabs.Screen
           name="system"
           options={{
-            title: "Sistem",
+            title: "System",
             headerShown: false,
             tabBarIcon: ({ color }) => <TabIcon label={"\u26A1"} color={color} />,
           }}
@@ -54,7 +53,7 @@ export default function Layout() {
         <Tabs.Screen
           name="control"
           options={{
-            title: "Kontrol",
+            title: "Settings",
             headerShown: false,
             tabBarIcon: ({ color }) => <TabIcon label={"\u2699\uFE0F"} color={color} />,
           }}

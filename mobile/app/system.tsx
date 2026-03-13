@@ -1,4 +1,3 @@
-// -*- coding: utf-8 -*-
 import React, { useState, useEffect, useRef } from "react";
 import { ScrollView, View, StyleSheet, ActivityIndicator, Animated, Easing } from "react-native";
 import { Text } from "react-native-paper";
@@ -21,9 +20,9 @@ function FadeIn({ delay = 0, children }: { delay?: number; children: React.React
 }
 
 const LEGEND_ITEMS = [
-  { color: "#FFD60A", label: "G\u00FC\u00E7 Ak\u0131\u015F\u0131" },
-  { color: "#0A84FF", label: "Veri Ak\u0131\u015F\u0131" },
-  { color: "#3A3A3C", label: "Aktif De\u011Fil" },
+  { color: "#FFD60A", label: "Power Flow" },
+  { color: "#0A84FF", label: "Data Flow" },
+  { color: "#3A3A3C", label: "Inactive" },
 ];
 
 export default function SystemScreen() {
@@ -31,7 +30,6 @@ export default function SystemScreen() {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [drawerContent, setDrawerContent] = useState<DrawerContent | null>(null);
 
-  // Station breathing animation
   const breathe = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     const anim = Animated.loop(Animated.sequence([
@@ -51,7 +49,7 @@ export default function SystemScreen() {
     return (
       <SafeAreaView style={[styles.container, styles.center]}>
         <ActivityIndicator size="large" color="#FFD60A" />
-        <Text style={styles.loadingText}>Sistem verisi y\u00FCkleniyor...</Text>
+        <Text style={styles.loadingText}>Loading system data...</Text>
       </SafeAreaView>
     );
   }
@@ -60,8 +58,8 @@ export default function SystemScreen() {
     return (
       <SafeAreaView style={[styles.container, styles.center]}>
         <Text style={{ fontSize: 48 }}>{"\u26A1"}</Text>
-        <Text style={styles.errorText}>Ba\u011Flant\u0131 Hatas\u0131</Text>
-        <Text style={styles.errorSub}>{error || "Veri yok"}</Text>
+        <Text style={styles.errorText}>Connection Error</Text>
+        <Text style={styles.errorSub}>{error || "No data"}</Text>
       </SafeAreaView>
     );
   }
@@ -70,7 +68,7 @@ export default function SystemScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} bounces>
         <FadeIn delay={0}>
-          <Text style={styles.largeTitle}>Sistem \u015Eemas\u0131</Text>
+          <Text style={styles.largeTitle}>System Diagram</Text>
         </FadeIn>
 
         <FadeIn delay={80}>
@@ -87,7 +85,7 @@ export default function SystemScreen() {
         <FadeIn delay={160}>
           <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>Devre Ak\u0131\u015F \u015Eemas\u0131</Text>
+            <Text style={styles.dividerText}>Circuit Flow Diagram</Text>
             <View style={styles.dividerLine} />
           </View>
         </FadeIn>
@@ -111,19 +109,19 @@ export default function SystemScreen() {
 
         <FadeIn delay={320}>
           <View style={styles.specCard}>
-            <Text style={styles.specTitle}>Teknik \u00D6zellikler</Text>
-            <SpecRow label="Panel G\u00FC\u00E7\u00FC" value="10W (max)" />
-            <SpecRow label="Batarya" value="10000mAh / 37Wh" />
-            <SpecRow label="Batarya Gerilimi" value="3.7V nominal" />
-            <SpecRow label="USB \u00C7\u0131k\u0131\u015F" value="5V / 1A (5W)" />
-            <SpecRow label="\u015Earj Verimi" value="%90" />
-            <SpecRow label="Boost Verimi" value="%85" />
-            <SpecRow label="Koruma Aral\u0131\u011F\u0131" value="%5 - %95" />
+            <Text style={styles.specTitle}>Technical Specifications</Text>
+            <SpecRow label="Panel Power" value="10W (max)" />
+            <SpecRow label="Battery" value="10000mAh / 37Wh" />
+            <SpecRow label="Battery Voltage" value="3.7V nominal" />
+            <SpecRow label="USB Output" value="5V / 1A (5W)" />
+            <SpecRow label="Charge Efficiency" value="90%" />
+            <SpecRow label="Boost Efficiency" value="85%" />
+            <SpecRow label="Protection Range" value="5% - 95%" />
           </View>
         </FadeIn>
 
         <FadeIn delay={400}>
-          <Text style={styles.hint}>Devre d\u00FC\u011F\u00FCmlerine dokunarak detayl\u0131 bilgi al\u0131n</Text>
+          <Text style={styles.hint}>Tap circuit nodes for detailed information</Text>
         </FadeIn>
 
         <View style={{ height: 100 }} />

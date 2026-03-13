@@ -1,4 +1,3 @@
-// -*- coding: utf-8 -*-
 import React, { useEffect, useRef, useState, memo, useCallback } from "react";
 import {
   View, Animated, StyleSheet, Easing, TouchableOpacity,
@@ -19,47 +18,47 @@ let tutorialDismissed = false;
 
 const NODES = [
   { key: "panel", icon: "\u2600\uFE0F", label: "Panel", color: "#FFD60A", explodeX: -60, explodeY: -60 },
-  { key: "charger", icon: "\u26A1", label: "\u015Earj", color: "#FF9F0A", explodeX: 60, explodeY: -60 },
-  { key: "battery", icon: "\uD83D\uDD0B", label: "Batarya", color: "#30D158", explodeX: 0, explodeY: 0 },
+  { key: "charger", icon: "\u26A1", label: "Charger", color: "#FF9F0A", explodeX: 60, explodeY: -60 },
+  { key: "battery", icon: "\uD83D\uDD0B", label: "Battery", color: "#30D158", explodeX: 0, explodeY: 0 },
   { key: "boost", icon: "\uD83D\uDD3C", label: "Boost", color: "#0A84FF", explodeX: -60, explodeY: 60 },
   { key: "usb", icon: "\uD83D\uDD0C", label: "USB", color: "#BF5AF2", explodeX: 60, explodeY: 60 },
 ];
 
 const NODE_INFO: Record<string, DrawerContent> = {
   panel: {
-    title: "Fotovoltaik Panel",
+    title: "Photovoltaic Panel",
     unit: "Watt (W)",
     formula: "P = \u03B7 \u00D7 A \u00D7 G",
-    explanation: "\u03B7=verimlilik, A=panel alan\u0131 (m\u00B2), G=g\u00FCne\u015F \u0131\u015F\u0131mas\u0131 (W/m\u00B2). Monokristal silikon h\u00FCcreler %15-22 verimle \u00E7al\u0131\u015F\u0131r. Bu sistemde 10W, 6-12V \u00E7\u0131k\u0131\u015Fl\u0131 panel kullan\u0131lmaktad\u0131r.",
-    funFact: "D\u00FCnya \u00FCzerinde bir saatlik g\u00FCne\u015F enerjisi, t\u00FCm insanl\u0131\u011F\u0131n bir y\u0131ll\u0131k enerji ihtiyac\u0131n\u0131 kar\u015F\u0131layabilir.",
+    explanation: "\u03B7=efficiency, A=panel area (m\u00B2), G=solar irradiance (W/m\u00B2). Monocrystalline silicon cells operate at 15-22% efficiency. This system uses a 10W panel with 6-12V output.",
+    funFact: "One hour of sunlight on Earth could meet all of humanity's energy needs for an entire year.",
   },
   charger: {
-    title: "\u015Earj Kontrol Devresi (CC/CV)",
-    unit: "miliamper (mA)",
-    formula: "Faz 1: I=sabit, Faz 2: V=sabit",
-    explanation: "Sabit Ak\u0131m (CC) faz\u0131nda batarya h\u0131zla \u015Farj edilir. %80 dolunca Sabit Gerilim (CV) faz\u0131na ge\u00E7ilir, ak\u0131m yava\u015F\u00E7a d\u00FC\u015Fer.",
-    funFact: "CC/CV y\u00F6ntemi, lityum-iyon batarya \u015Farj\u0131n\u0131n alt\u0131n standard\u0131d\u0131r.",
+    title: "Charge Controller (CC/CV)",
+    unit: "Milliamp (mA)",
+    formula: "Phase 1: I=const, Phase 2: V=const",
+    explanation: "During the Constant Current (CC) phase, the battery charges rapidly. At ~80% capacity, it switches to Constant Voltage (CV) phase, where current gradually decreases.",
+    funFact: "The CC/CV method is the gold standard for lithium-ion battery charging.",
   },
   battery: {
-    title: "Lityum-\u0130yon Batarya",
-    unit: "Watt-saat (Wh)",
+    title: "Lithium-Ion Battery",
+    unit: "Watt-hour (Wh)",
     formula: "E = Q \u00D7 V",
-    explanation: "Li-ion batarya 3.6-4.2V aras\u0131nda \u00E7al\u0131\u015F\u0131r. 10000mAh kapasite = 37Wh enerji depolama. %5-%95 koruma aral\u0131\u011F\u0131.",
-    funFact: "Tam dolu batarya, bir telefonu yakla\u015F\u0131k 2.5 kez \u015Farj edebilir.",
+    explanation: "Li-ion battery operates between 3.6-4.2V. 10000mAh capacity = 37Wh energy storage. Protection range: 5%-95%.",
+    funFact: "A fully charged battery can charge a smartphone approximately 2.5 times.",
   },
   boost: {
     title: "DC-DC Boost Converter",
-    unit: "Y\u00FCzde (%)",
+    unit: "Percent (%)",
     formula: "V_out = V_in / (1 - D)",
-    explanation: "3.7V giri\u015Fi 5V \u00E7\u0131k\u0131\u015Fa y\u00FCkseltir. D\u22480.26 duty cycle. %85 verimlilik end\u00FCstri standard\u0131d\u0131r.",
-    funFact: "\u0130deal kay\u0131ps\u0131z d\u00F6n\u00FC\u015F\u00FCm termodinamik olarak m\u00FCmk\u00FCn de\u011Fildir.",
+    explanation: "Steps up 3.7V input to 5V output. D\u22480.26 duty cycle. 85% efficiency is the industry standard.",
+    funFact: "An ideal lossless conversion is thermodynamically impossible.",
   },
   usb: {
-    title: "USB-A G\u00FC\u00E7 \u00C7\u0131k\u0131\u015F\u0131",
+    title: "USB-A Power Output",
     unit: "Volt (V) / mA",
     formula: "P = 5V \u00D7 1A = 5W",
-    explanation: "USB \u015Farj spesifikasyonu 5V sabit gerilimde 1A ak\u0131m sa\u011Flar.",
-    funFact: "USB-C PD ile 240W'a kadar g\u00FC\u00E7 aktar\u0131m\u0131 m\u00FCmk\u00FCnd\u00FCr.",
+    explanation: "USB charging specification provides 1A current at a constant 5V voltage.",
+    funFact: "USB-C PD enables power delivery up to 240W.",
   },
 };
 
@@ -71,11 +70,11 @@ const CONNECTIONS = [
 ];
 
 const EXPLODE_DESC: Record<string, { name: string; desc: string }> = {
-  panel: { name: "G\u00FCne\u015F Paneli", desc: "Foton \u2192 Elektrik d\u00F6n\u00FC\u015F\u00FCm\u00FC" },
-  charger: { name: "\u015Earj Devresi", desc: "CC/CV ak\u0131m kontrol\u00FC" },
-  battery: { name: "Li-ion Batarya", desc: "37Wh enerji depolama" },
-  boost: { name: "DC-DC Converter", desc: "3.7V \u2192 5V y\u00FCkseltme" },
-  usb: { name: "USB \u00C7\u0131k\u0131\u015F", desc: "5V / 1A g\u00FC\u00E7 da\u011F\u0131t\u0131m\u0131" },
+  panel: { name: "Solar Panel", desc: "Photon \u2192 Electricity conversion" },
+  charger: { name: "Charge Circuit", desc: "CC/CV current control" },
+  battery: { name: "Li-ion Battery", desc: "37Wh energy storage" },
+  boost: { name: "DC-DC Converter", desc: "3.7V \u2192 5V step-up" },
+  usb: { name: "USB Output", desc: "5V / 1A power delivery" },
 };
 
 interface Props {
@@ -307,8 +306,8 @@ function CircuitDiagram({ status, onNodePress }: Props) {
 
   const infoChips = [
     { icon: "\u2600\uFE0F", label: "Panel", value: `${status.solar_watts.toFixed(1)}W`, color: "#FFD60A", active: status.solar_watts > 0.1, nodeKey: "panel" },
-    { icon: "\u26A1", label: "Devre", value: `${chargeCurrent.toFixed(0)}mA`, color: "#FF9F0A", active: status.solar_watts > 0.1, nodeKey: "charger" },
-    { icon: "\uD83D\uDD0B", label: "Batarya", value: `${status.battery_percent.toFixed(0)}%`, color: "#30D158", active: true, nodeKey: "battery" },
+    { icon: "\u26A1", label: "Circuit", value: `${chargeCurrent.toFixed(0)}mA`, color: "#FF9F0A", active: status.solar_watts > 0.1, nodeKey: "charger" },
+    { icon: "\uD83D\uDD0B", label: "Battery", value: `${status.battery_percent.toFixed(0)}%`, color: "#30D158", active: true, nodeKey: "battery" },
     { icon: "\uD83D\uDD3C", label: "Boost", value: `\u03B7${status.efficiency}%`, color: "#0A84FF", active: status.phone_connected, nodeKey: "boost" },
     { icon: "\uD83D\uDD0C", label: "USB", value: `5V/${usbCurrent}mA`, color: "#BF5AF2", active: status.phone_connected, nodeKey: "usb" },
   ];
@@ -317,12 +316,12 @@ function CircuitDiagram({ status, onNodePress }: Props) {
     <View style={styles.outer}>
       {/* Top Control Bar */}
       <View style={styles.controlBar}>
-        <CtrlBtn icon="\uD83D\uDD0D\u2212" label="Uzakla\u015F" onPress={handleZoomOut} />
-        <CtrlBtn icon="\uD83D\uDD0D+" label="Yakla\u015F" onPress={handleZoomIn} />
-        <CtrlBtn icon="\u27F2" label="S\u0131f\u0131rla" onPress={handleReset} />
+        <CtrlBtn icon="\uD83D\uDD0D\u2212" label="Zoom Out" onPress={handleZoomOut} />
+        <CtrlBtn icon="\uD83D\uDD0D+" label="Zoom In" onPress={handleZoomIn} />
+        <CtrlBtn icon="\u27F2" label="Reset" onPress={handleReset} />
         <CtrlBtn
           icon={exploded ? "\u2715" : "\uD83D\uDCA5"}
-          label={exploded ? "Kapat" : "A\u00E7"}
+          label={exploded ? "Close" : "Explode"}
           onPress={handleExplode}
           active={exploded}
         />
@@ -330,7 +329,7 @@ function CircuitDiagram({ status, onNodePress }: Props) {
 
       {/* Canvas */}
       <View style={styles.canvasContainer} {...panResponder.panHandlers}>
-        <Text style={styles.canvasLabel}>Devre \u015Eemas\u0131</Text>
+        <Text style={styles.canvasLabel}>Circuit Diagram</Text>
 
         {/* Dot grid */}
         <Svg width={canvasW + 16} height={280} style={StyleSheet.absoluteFill}>
@@ -479,25 +478,25 @@ function CircuitDiagram({ status, onNodePress }: Props) {
               opacity: tutorialStep.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 0, 0], extrapolate: "clamp" }),
             }]}>
               <Text style={styles.tutorialIcon}>{"\uD83D\uDC46"}</Text>
-              <Text style={styles.tutorialText}>S\u00FCr\u00FCkle</Text>
-              <Text style={styles.tutorialSub}>Devreyi hareket ettir</Text>
+              <Text style={styles.tutorialText}>Drag</Text>
+              <Text style={styles.tutorialSub}>Move the circuit around</Text>
             </Animated.View>
             <Animated.View style={[styles.tutorialStep, {
               opacity: tutorialStep.interpolate({ inputRange: [0.5, 1, 1.5], outputRange: [0, 1, 0], extrapolate: "clamp" }),
             }]}>
               <Text style={styles.tutorialIcon}>{"\uD83E\uDD0F"}</Text>
-              <Text style={styles.tutorialText}>Yak\u0131nla\u015Ft\u0131r</Text>
-              <Text style={styles.tutorialSub}>{"\u0130"}ki parmakla yak\u0131nla\u015F/uzakla\u015F</Text>
+              <Text style={styles.tutorialText}>Pinch</Text>
+              <Text style={styles.tutorialSub}>Pinch to zoom in/out</Text>
             </Animated.View>
             <Animated.View style={[styles.tutorialStep, {
               opacity: tutorialStep.interpolate({ inputRange: [1.5, 2, 2.5], outputRange: [0, 1, 1], extrapolate: "clamp" }),
             }]}>
               <Text style={styles.tutorialIcon}>{"\uD83D\uDC46"}</Text>
-              <Text style={styles.tutorialText}>Bile\u015Fene dokun</Text>
-              <Text style={styles.tutorialSub}>Detayl\u0131 bilgi i\u00E7in dokun</Text>
+              <Text style={styles.tutorialText}>Tap a node</Text>
+              <Text style={styles.tutorialSub}>Tap for detailed info</Text>
             </Animated.View>
             <TouchableOpacity style={styles.tutorialBtn} onPress={dismissTutorial} activeOpacity={0.8}>
-              <Text style={styles.tutorialBtnText}>Anlad\u0131m</Text>
+              <Text style={styles.tutorialBtnText}>Got it</Text>
             </TouchableOpacity>
           </View>
         </Animated.View>

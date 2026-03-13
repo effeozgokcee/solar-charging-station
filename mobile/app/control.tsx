@@ -1,4 +1,3 @@
-// -*- coding: utf-8 -*-
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
   ScrollView, View, StyleSheet, Alert, TouchableOpacity, Animated, Easing, Dimensions,
@@ -13,10 +12,10 @@ const SCREEN_W = Dimensions.get("window").width;
 
 const SPEED_OPTIONS = [1, 5, 10, 60];
 const WEATHER_OPTIONS = [
-  { key: "sunny", label: "G\u00FCne\u015Fli" },
-  { key: "partly_cloudy", label: "Par\u00E7al\u0131 Bulutlu" },
-  { key: "cloudy", label: "Bulutlu" },
-  { key: "night", label: "Gece" },
+  { key: "sunny", label: "Sunny" },
+  { key: "partly_cloudy", label: "Partly Cloudy" },
+  { key: "cloudy", label: "Cloudy" },
+  { key: "night", label: "Night" },
 ];
 
 function FadeIn({ delay = 0, children }: { delay?: number; children: React.ReactNode }) {
@@ -60,13 +59,13 @@ export default function ControlScreen() {
   const handleWeather = async (w: string) => {
     setWeather(w);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    try { await sendControl({ weather: w }); toast("Hava durumu g\u00FCncellendi"); } catch { toast("Hata: ba\u011Flant\u0131 kurulamad\u0131"); }
+    try { await sendControl({ weather: w }); toast("Weather updated"); } catch { toast("Error: connection failed"); }
   };
 
   const handlePhone = async (v: boolean) => {
     setPhoneConnected(v);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    try { await sendControl({ phone_connected: v }); toast(v ? "Telefon ba\u011Fland\u0131" : "Telefon \u00E7\u0131kar\u0131ld\u0131"); } catch { toast("Hata"); }
+    try { await sendControl({ phone_connected: v }); toast(v ? "Phone connected" : "Phone disconnected"); } catch { toast("Error"); }
   };
 
   const handleSpeed = async (s: number) => {
@@ -74,21 +73,21 @@ export default function ControlScreen() {
     Animated.spring(speedSlide, { toValue: idx, tension: 80, friction: 12, useNativeDriver: true }).start();
     setSpeed(s);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    try { await sendControl({ speed: s }); toast(`H\u0131z: ${s}x`); } catch { toast("Hata"); }
+    try { await sendControl({ speed: s }); toast(`Speed: ${s}x`); } catch { toast("Error"); }
   };
 
   const handleReset = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    Alert.alert("Sim\u00FClasyonu S\u0131f\u0131rla", "T\u00FCm sim\u00FClasyon verileri s\u0131f\u0131rlanacak.", [
-      { text: "\u0130ptal", style: "cancel" },
+    Alert.alert("Reset Simulation", "All simulation data will be reset.", [
+      { text: "Cancel", style: "cancel" },
       {
-        text: "S\u0131f\u0131rla", style: "destructive",
+        text: "Reset", style: "destructive",
         onPress: async () => {
           try {
             await resetSimulation();
             setWeather("sunny"); setPhoneConnected(false); setSpeed(1); speedSlide.setValue(0);
-            toast("Sim\u00FClasyon s\u0131f\u0131rland\u0131");
-          } catch { toast("Hata"); }
+            toast("Simulation reset");
+          } catch { toast("Error"); }
         },
       },
     ]);
@@ -101,7 +100,7 @@ export default function ControlScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} bounces>
         <FadeIn delay={0}>
-          <Text style={styles.largeTitle}>Kontrol</Text>
+          <Text style={styles.largeTitle}>Settings</Text>
         </FadeIn>
 
         <FadeIn delay={80}>
@@ -111,7 +110,7 @@ export default function ControlScreen() {
         </FadeIn>
 
         <FadeIn delay={160}>
-          <Text style={styles.sectionHeader}>HAVA DURUMU</Text>
+          <Text style={styles.sectionHeader}>WEATHER</Text>
           <View style={styles.groupCard}>
             {WEATHER_OPTIONS.map((opt, i) => (
               <PressableRow key={opt.key} onPress={() => handleWeather(opt.key)}>
@@ -128,23 +127,23 @@ export default function ControlScreen() {
         </FadeIn>
 
         <FadeIn delay={240}>
-          <Text style={styles.sectionHeader}>C\u0130HAZ</Text>
+          <Text style={styles.sectionHeader}>DEVICE</Text>
           <View style={styles.groupCard}>
             <View style={styles.listRow}>
               <View style={styles.listRowLeft}>
                 <Text style={{ fontSize: 20 }}>{"\uD83D\uDCF1"}</Text>
-                <Text style={styles.listRowText}>Telefon Ba\u011Fl\u0131</Text>
+                <Text style={styles.listRowText}>Phone Connected</Text>
               </View>
               <Switch value={phoneConnected} onValueChange={handlePhone} color="#30D158" />
             </View>
           </View>
           <Text style={styles.footnote}>
-            {phoneConnected ? "Telefon USB \u00FCzerinden 5W ile \u015Farj oluyor" : "Cihaz ba\u011Fl\u0131 de\u011Fil"}
+            {phoneConnected ? "Phone is charging at 5W via USB" : "No device connected"}
           </Text>
         </FadeIn>
 
         <FadeIn delay={320}>
-          <Text style={styles.sectionHeader}>S\u0130M\u00DCLASYON HIZI</Text>
+          <Text style={styles.sectionHeader}>SIMULATION SPEED</Text>
           <View style={styles.segmentOuter}>
             <Animated.View style={[styles.segmentIndicator, { transform: [{ translateX: slideX }], width: segW - 4 }]} />
             {SPEED_OPTIONS.map((s) => (
@@ -154,24 +153,24 @@ export default function ControlScreen() {
               </TouchableOpacity>
             ))}
           </View>
-          <Text style={styles.footnote}>Her 2 saniyede {speed} dakika ilerler</Text>
+          <Text style={styles.footnote}>Every 2 seconds advances {speed} minute(s)</Text>
         </FadeIn>
 
         {status && (
           <FadeIn delay={400}>
-            <Text style={styles.sectionHeader}>MEVCUT DURUM</Text>
+            <Text style={styles.sectionHeader}>CURRENT STATUS</Text>
             <View style={styles.groupCard}>
-              <InfoRow label="Saat" value={status.time} border />
-              <InfoRow label="Batarya" value={`${status.battery_percent}%`} border />
-              <InfoRow label="G\u00FCne\u015F" value={`${status.solar_watts}W`} border />
-              <InfoRow label="T\u00FCketim" value={`${status.consumption_watts}W`} />
+              <InfoRow label="Time" value={status.time} border />
+              <InfoRow label="Battery" value={`${status.battery_percent}%`} border />
+              <InfoRow label="Solar" value={`${status.solar_watts}W`} border />
+              <InfoRow label="Consumption" value={`${status.consumption_watts}W`} />
             </View>
           </FadeIn>
         )}
 
         <FadeIn delay={480}>
           <TouchableOpacity style={styles.resetBtn} onPress={handleReset} activeOpacity={0.7}>
-            <Text style={styles.resetText}>Sim\u00FClasyonu S\u0131f\u0131rla</Text>
+            <Text style={styles.resetText}>Reset Simulation</Text>
           </TouchableOpacity>
         </FadeIn>
       </ScrollView>
