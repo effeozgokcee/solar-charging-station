@@ -43,6 +43,14 @@ export default function Layout() {
           }}
         />
         <Tabs.Screen
+          name="system"
+          options={{
+            title: "Sistem",
+            headerShown: false,
+            tabBarIcon: ({ color }) => <TabIcon label={"\u26A1"} color={color} />,
+          }}
+        />
+        <Tabs.Screen
           name="control"
           options={{
             title: "Settings",
