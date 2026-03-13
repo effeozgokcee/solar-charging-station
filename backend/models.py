@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Literal
+from typing import Literal, Optional
 
 
 class SimulationStatus(BaseModel):
@@ -16,9 +16,9 @@ class SimulationStatus(BaseModel):
 
 
 class ControlInput(BaseModel):
-    weather: Literal["sunny", "partly_cloudy", "cloudy", "night"] | None = None
-    phone_connected: bool | None = None
-    speed: int | None = None
+    weather: Optional[Literal["sunny", "partly_cloudy", "cloudy", "night"]] = None
+    phone_connected: Optional[bool] = None
+    speed: Optional[int] = None
 
 
 class HealthResponse(BaseModel):

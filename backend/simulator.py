@@ -1,6 +1,7 @@
 import math
 import random
 from datetime import datetime, timedelta
+from typing import List, Optional
 from models import SimulationStatus
 
 
@@ -31,7 +32,7 @@ class SolarSimulator:
         self.weather = "sunny"
         self.phone_connected = False
         self.speed = 1
-        self.history: list[SimulationStatus] = []
+        self.history: List[SimulationStatus] = []
         self._tick_counter = 0
 
     def _solar_production(self) -> float:
@@ -117,10 +118,10 @@ class SolarSimulator:
         consumption_watts = self._consumption()
         return self._build_status(solar_watts, consumption_watts)
 
-    def get_history(self) -> list[SimulationStatus]:
+    def get_history(self) -> List[SimulationStatus]:
         return list(self.history)
 
-    def set_control(self, weather: str | None, phone_connected: bool | None, speed: int | None):
+    def set_control(self, weather: Optional[str], phone_connected: Optional[bool], speed: Optional[int]):
         if weather is not None and weather in self.WEATHER_MULTIPLIERS:
             self.weather = weather
         if phone_connected is not None:

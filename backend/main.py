@@ -1,5 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager
+from typing import List
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -48,7 +49,7 @@ async def get_status():
     return simulator.get_status()
 
 
-@app.get("/history", response_model=list[SimulationStatus])
+@app.get("/history", response_model=List[SimulationStatus])
 async def get_history():
     return simulator.get_history()
 
