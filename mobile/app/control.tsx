@@ -1,11 +1,77 @@
-import React, { useState } from "react";
-import { ScrollView, View, StyleSheet, Alert } from "react-native";
+import React, { useState, useRef, useCallback } from "react";
+import {
+  ScrollView,
+  View,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+  Animated,
+  Easing,
+} from "react-native";
 import { Text, Switch, Button, Snackbar } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import WeatherSelector from "../components/WeatherSelector";
+import WeatherAnimation from "../components/WeatherAnimation";
 import { useSimulation } from "../hooks/useSimulation";
 
 const SPEED_OPTIONS = [1, 5, 10, 60];
+
+const WEATHER_OPTIONS = [
+  { key: "sunny", label: "Gunesli" },
+  { key: "partly_cloudy", label: "Parcali" },
+  { key: "cloudy", label: "Bulutlu" },
+  { key: "night", label: "Gece" },
+];
+
+function AnimatedButton({
+  children,
+  onPress,
+  selected,
+  style,
+}: {
+  children: React.ReactNode;
+  onPress: () => void;
+  selected: boolean;
+  style?: object;
+}) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.timing(scaleAnim, {
+      toValue: 0.95,
+      duration: 100,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.05,
+        duration: 80,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.back(2)),
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 120,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  return (
+    <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, style]}>
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={0.9}
+      >
+        {children}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
 
 export default function ControlScreen() {
   const { status, sendControl, resetSimulation } = useSimulation();
@@ -15,10 +81,13 @@ export default function ControlScreen() {
   const [snackVisible, setSnackVisible] = useState(false);
   const [snackMessage, setSnackMessage] = useState("");
 
-  const showToast = (msg: string) => {
+  const phoneSlide = useRef(new Animated.Value(phoneConnected ? 1 : 0)).current;
+  const speedIndicator = useRef(new Animated.Value(0)).current;
+
+  const showToast = useCallback((msg: string) => {
     setSnackMessage(msg);
     setSnackVisible(true);
-  };
+  }, []);
 
   const handleWeather = async (w: string) => {
     setWeather(w);
@@ -32,6 +101,12 @@ export default function ControlScreen() {
 
   const handlePhone = async (connected: boolean) => {
     setPhoneConnected(connected);
+    Animated.spring(phoneSlide, {
+      toValue: connected ? 1 : 0,
+      useNativeDriver: true,
+      tension: 40,
+      friction: 7,
+    }).start();
     try {
       await sendControl({ phone_connected: connected });
       showToast(connected ? "Telefon baglandi" : "Telefon ayrildi");
@@ -41,6 +116,13 @@ export default function ControlScreen() {
   };
 
   const handleSpeed = async (s: number) => {
+    const idx = SPEED_OPTIONS.indexOf(s);
+    Animated.spring(speedIndicator, {
+      toValue: idx,
+      useNativeDriver: true,
+      tension: 50,
+      friction: 8,
+    }).start();
     setSpeed(s);
     try {
       await sendControl({ speed: s });
@@ -65,6 +147,8 @@ export default function ControlScreen() {
               setWeather("sunny");
               setPhoneConnected(false);
               setSpeed(1);
+              phoneSlide.setValue(0);
+              speedIndicator.setValue(0);
               showToast("Simulasyon sifirlandi");
             } catch {
               showToast("Hata: sifirlama basarisiz");
@@ -75,56 +159,96 @@ export default function ControlScreen() {
     );
   };
 
+  const phoneIconTranslate = phoneSlide.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-20, 0],
+  });
+  const phoneIconOpacity = phoneSlide.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <WeatherSelector selected={weather} onSelect={handleWeather} />
+      {/* Weather Preview */}
+      <View style={styles.weatherPreview}>
+        <WeatherAnimation weather={weather} size={80} />
+      </View>
 
+      {/* Weather Selector */}
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Hava Durumu</Text>
+        <View style={styles.weatherRow}>
+          {WEATHER_OPTIONS.map((opt) => (
+            <AnimatedButton
+              key={opt.key}
+              onPress={() => handleWeather(opt.key)}
+              selected={weather === opt.key}
+              style={{ flex: 1 }}
+            >
+              <View style={[styles.weatherBtn, weather === opt.key && styles.weatherBtnSelected]}>
+                <WeatherAnimation weather={opt.key} size={36} />
+                <Text style={[styles.weatherBtnLabel, weather === opt.key && styles.weatherBtnLabelSelected]}>
+                  {opt.label}
+                </Text>
+              </View>
+            </AnimatedButton>
+          ))}
+        </View>
+      </View>
+
+      {/* Phone Toggle */}
       <View style={styles.card}>
         <View style={styles.switchRow}>
           <View style={styles.switchLabel}>
-            <MaterialCommunityIcons name="cellphone" size={24} color="#2196F3" />
+            <Animated.View
+              style={{
+                transform: [{ translateX: phoneIconTranslate }],
+                opacity: phoneIconOpacity,
+              }}
+            >
+              <MaterialCommunityIcons name="cellphone" size={24} color="#2196F3" />
+            </Animated.View>
             <Text style={styles.switchText}>Telefon Baglantisi</Text>
           </View>
-          <Switch
-            value={phoneConnected}
-            onValueChange={handlePhone}
-            color="#F5A623"
-          />
+          <Switch value={phoneConnected} onValueChange={handlePhone} color="#F5A623" />
         </View>
         <Text style={styles.switchHint}>
           {phoneConnected ? "Telefon sarj ediliyor (5W)" : "Telefon bagli degil"}
         </Text>
       </View>
 
+      {/* Speed Selector */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Simulasyon Hizi</Text>
         <View style={styles.speedRow}>
           {SPEED_OPTIONS.map((s) => (
-            <Button
+            <AnimatedButton
               key={s}
-              mode={speed === s ? "contained" : "outlined"}
               onPress={() => handleSpeed(s)}
-              style={[styles.speedButton, speed === s && styles.speedButtonActive]}
-              labelStyle={[styles.speedLabel, speed === s && styles.speedLabelActive]}
-              compact
+              selected={speed === s}
+              style={{ flex: 1 }}
             >
-              {s}x
-            </Button>
+              <View style={[styles.speedBtn, speed === s && styles.speedBtnActive]}>
+                <Text style={[styles.speedBtnText, speed === s && styles.speedBtnTextActive]}>
+                  {s}x
+                </Text>
+              </View>
+            </AnimatedButton>
           ))}
         </View>
-        <Text style={styles.switchHint}>
-          Her 2 saniyede {speed} dakika simulasyon ilerler
-        </Text>
+        <Text style={styles.switchHint}>Her 2 saniyede {speed} dakika simulasyon ilerler</Text>
       </View>
 
+      {/* Status */}
       {status && (
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Mevcut Durum</Text>
           <View style={styles.statusGrid}>
-            <StatusItem label="Saat" value={status.time} />
-            <StatusItem label="Batarya" value={`${status.battery_percent}%`} />
-            <StatusItem label="Gunes" value={`${status.solar_watts}W`} />
-            <StatusItem label="Tuketim" value={`${status.consumption_watts}W`} />
+            <StatusItem label="Saat" value={status.time} color="#F5A623" />
+            <StatusItem label="Batarya" value={`${status.battery_percent}%`} color="#00C851" />
+            <StatusItem label="Gunes" value={`${status.solar_watts}W`} color="#F5A623" />
+            <StatusItem label="Tuketim" value={`${status.consumption_watts}W`} color="#2196F3" />
           </View>
         </View>
       )}
@@ -151,11 +275,11 @@ export default function ControlScreen() {
   );
 }
 
-function StatusItem({ label, value }: { label: string; value: string }) {
+function StatusItem({ label, value, color }: { label: string; value: string; color: string }) {
   return (
     <View style={styles.statusItem}>
       <Text style={styles.statusLabel}>{label}</Text>
-      <Text style={styles.statusValue}>{value}</Text>
+      <Text style={[styles.statusValue, { color }]}>{value}</Text>
     </View>
   );
 }
@@ -169,6 +293,10 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 32,
   },
+  weatherPreview: {
+    alignItems: "center",
+    marginBottom: 8,
+  },
   card: {
     backgroundColor: "#16213E",
     borderRadius: 12,
@@ -181,11 +309,36 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   sectionTitle: {
-    color: "#AAAAAA",
+    color: "#8892A4",
     fontSize: 12,
     textTransform: "uppercase",
     letterSpacing: 1,
     marginBottom: 12,
+  },
+  weatherRow: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  weatherBtn: {
+    alignItems: "center",
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "transparent",
+    backgroundColor: "#1A1A2E",
+  },
+  weatherBtnSelected: {
+    borderColor: "#F5A623",
+    backgroundColor: "#1E2D50",
+  },
+  weatherBtnLabel: {
+    color: "#8892A4",
+    fontSize: 10,
+    marginTop: 4,
+  },
+  weatherBtnLabelSelected: {
+    color: "#F5A623",
+    fontWeight: "bold",
   },
   switchRow: {
     flexDirection: "row",
@@ -202,27 +355,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   switchHint: {
-    color: "#666666",
+    color: "#3A4A5C",
     fontSize: 12,
     marginTop: 8,
   },
   speedRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     gap: 8,
   },
-  speedButton: {
-    flex: 1,
+  speedBtn: {
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1.5,
     borderColor: "#F5A623",
+    alignItems: "center",
   },
-  speedButtonActive: {
+  speedBtnActive: {
     backgroundColor: "#F5A623",
   },
-  speedLabel: {
+  speedBtnText: {
     color: "#F5A623",
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: "bold",
   },
-  speedLabelActive: {
+  speedBtnTextActive: {
     color: "#1A1A2E",
   },
   statusGrid: {
@@ -234,22 +390,21 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   statusLabel: {
-    color: "#AAAAAA",
+    color: "#8892A4",
     fontSize: 11,
     textTransform: "uppercase",
   },
   statusValue: {
-    color: "#FFFFFF",
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
     marginTop: 2,
   },
   resetButton: {
     marginTop: 16,
-    borderColor: "#F44336",
+    borderColor: "#FF4444",
   },
   resetLabel: {
-    color: "#F44336",
+    color: "#FF4444",
   },
   snackbar: {
     backgroundColor: "#16213E",
