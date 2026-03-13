@@ -10,7 +10,6 @@ class SolarSimulator:
     BATTERY_CAPACITY_WH = 37.0  # 10000mAh * 3.7V
     CHARGE_EFFICIENCY = 0.90
     DISCHARGE_EFFICIENCY = 0.95
-    PHONE_DRAW_WATTS = 5.0  # 5V * 1A
     BOOST_EFFICIENCY = 0.85
     MIN_BATTERY_PERCENT = 5.0
     MAX_BATTERY_PERCENT = 95.0
@@ -23,6 +22,8 @@ class SolarSimulator:
         "night": 0.0,
     }
 
+    VALID_DEVICES = {"none", "phone", "earbuds", "tablet", "smartwatch", "speaker"}
+
     def __init__(self):
         self.reset()
 
@@ -32,6 +33,8 @@ class SolarSimulator:
         self.weather = "sunny"
         self.phone_connected = False
         self.speed = 1
+        self.device_type = "none"
+        self.device_draw_watts = 0.0
         self.history: List[SimulationStatus] = []
         self._tick_counter = 0
 
@@ -47,9 +50,9 @@ class SolarSimulator:
         return max(0.0, base_power * weather_mult * noise)
 
     def _consumption(self) -> float:
-        if not self.phone_connected:
+        if not self.phone_connected or self.device_draw_watts <= 0:
             return 0.0
-        return self.PHONE_DRAW_WATTS / self.BOOST_EFFICIENCY
+        return self.device_draw_watts / self.BOOST_EFFICIENCY
 
     def tick(self):
         for _ in range(self.speed):
@@ -86,7 +89,7 @@ class SolarSimulator:
 
     def _build_status(self, solar_watts: float, consumption_watts: float) -> SimulationStatus:
         battery_percent = (self.battery_wh / self.BATTERY_CAPACITY_WH) * 100.0
-        display_consumption = self.PHONE_DRAW_WATTS if self.phone_connected else 0.0
+        display_consumption = self.device_draw_watts if self.phone_connected else 0.0
         net = solar_watts - display_consumption
 
         if net > 0.1:
@@ -111,6 +114,7 @@ class SolarSimulator:
             phone_connected=self.phone_connected,
             efficiency=round(overall_efficiency, 1),
             charging_status=charging_status,
+            device_type=self.device_type,
         )
 
     def get_status(self) -> SimulationStatus:
@@ -121,10 +125,17 @@ class SolarSimulator:
     def get_history(self) -> List[SimulationStatus]:
         return list(self.history)
 
-    def set_control(self, weather: Optional[str], phone_connected: Optional[bool], speed: Optional[int]):
+    def set_control(self, weather: Optional[str], phone_connected: Optional[bool],
+                    speed: Optional[int], device_type: Optional[str] = None,
+                    consumption_watts: Optional[float] = None):
         if weather is not None and weather in self.WEATHER_MULTIPLIERS:
             self.weather = weather
         if phone_connected is not None:
             self.phone_connected = phone_connected
         if speed is not None and speed in (1, 5, 10, 60):
             self.speed = speed
+        if device_type is not None and device_type in self.VALID_DEVICES:
+            self.device_type = device_type
+            self.phone_connected = device_type != "none"
+        if consumption_watts is not None and 0 <= consumption_watts <= 15:
+            self.device_draw_watts = consumption_watts

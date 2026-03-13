@@ -77,6 +77,71 @@ const EXPLODE_DESC: Record<string, { name: string; desc: string }> = {
   usb: { name: "USB Output", desc: "5V / 1A power delivery" },
 };
 
+// --- SVG Button Icons (no emoji, renders reliably on iOS) ---
+function ZoomOutIcon({ active }: { active?: boolean }) {
+  const c = active ? "#000" : "rgba(235,235,245,0.7)";
+  return (
+    <Svg width={20} height={20} viewBox="0 0 20 20">
+      <Circle cx={10} cy={10} r={8} stroke={c} strokeWidth={1.5} fill="none" />
+      <SvgLine x1={6} y1={10} x2={14} y2={10} stroke={c} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function ZoomInIcon({ active }: { active?: boolean }) {
+  const c = active ? "#000" : "rgba(235,235,245,0.7)";
+  return (
+    <Svg width={20} height={20} viewBox="0 0 20 20">
+      <Circle cx={10} cy={10} r={8} stroke={c} strokeWidth={1.5} fill="none" />
+      <SvgLine x1={6} y1={10} x2={14} y2={10} stroke={c} strokeWidth={2} strokeLinecap="round" />
+      <SvgLine x1={10} y1={6} x2={10} y2={14} stroke={c} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function ResetIcon({ active }: { active?: boolean }) {
+  const c = active ? "#000" : "rgba(235,235,245,0.7)";
+  return (
+    <Svg width={20} height={20} viewBox="0 0 20 20">
+      <G fill="none" stroke={c} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+        <Polygon points="5,8 2,5 5,2" fill={c} stroke="none" />
+        <SvgLine x1={3} y1={5} x2={3} y2={10} stroke={c} />
+        <Rect x={3} y={5} width={0} height={0} />
+      </G>
+      <Circle cx={10} cy={10} r={7} stroke={c} strokeWidth={1.5} fill="none" />
+      <SvgLine x1={3} y1={5} x2={7} y2={5} stroke={c} strokeWidth={1.5} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function ExplodeIcon({ active, collapsed }: { active?: boolean; collapsed?: boolean }) {
+  const c = active ? "#000" : "rgba(235,235,245,0.7)";
+  if (collapsed) {
+    // 4 arrows pointing inward
+    return (
+      <Svg width={20} height={20} viewBox="0 0 20 20">
+        <Rect x={3} y={3} width={5} height={5} rx={1} fill={c} />
+        <Rect x={12} y={3} width={5} height={5} rx={1} fill={c} />
+        <Rect x={3} y={12} width={5} height={5} rx={1} fill={c} />
+        <Rect x={12} y={12} width={5} height={5} rx={1} fill={c} />
+      </Svg>
+    );
+  }
+  // 4 small squares in corners (expand)
+  return (
+    <Svg width={20} height={20} viewBox="0 0 20 20">
+      <Rect x={2} y={2} width={4} height={4} rx={1} fill={c} />
+      <Rect x={14} y={2} width={4} height={4} rx={1} fill={c} />
+      <Rect x={2} y={14} width={4} height={4} rx={1} fill={c} />
+      <Rect x={14} y={14} width={4} height={4} rx={1} fill={c} />
+      <SvgLine x1={7} y1={4} x2={13} y2={4} stroke={c} strokeWidth={1} strokeDasharray="2,2" />
+      <SvgLine x1={7} y1={16} x2={13} y2={16} stroke={c} strokeWidth={1} strokeDasharray="2,2" />
+      <SvgLine x1={4} y1={7} x2={4} y2={13} stroke={c} strokeWidth={1} strokeDasharray="2,2" />
+      <SvgLine x1={16} y1={7} x2={16} y2={13} stroke={c} strokeWidth={1} strokeDasharray="2,2" />
+    </Svg>
+  );
+}
+
 interface Props {
   status: SimulationStatus;
   onNodePress: (content: DrawerContent) => void;
@@ -314,24 +379,31 @@ function CircuitDiagram({ status, onNodePress }: Props) {
 
   return (
     <View style={styles.outer}>
-      {/* Top Control Bar */}
+      {/* Top Control Bar - SVG icons instead of emoji (FIX 1) */}
       <View style={styles.controlBar}>
-        <CtrlBtn icon="\uD83D\uDD0D\u2212" label="Zoom Out" onPress={handleZoomOut} />
-        <CtrlBtn icon="\uD83D\uDD0D+" label="Zoom In" onPress={handleZoomIn} />
-        <CtrlBtn icon="\u27F2" label="Reset" onPress={handleReset} />
+        <CtrlBtn label="Zoom Out" onPress={handleZoomOut}>
+          <ZoomOutIcon />
+        </CtrlBtn>
+        <CtrlBtn label="Zoom In" onPress={handleZoomIn}>
+          <ZoomInIcon />
+        </CtrlBtn>
+        <CtrlBtn label="Reset" onPress={handleReset}>
+          <ResetIcon />
+        </CtrlBtn>
         <CtrlBtn
-          icon={exploded ? "\u2715" : "\uD83D\uDCA5"}
           label={exploded ? "Close" : "Explode"}
           onPress={handleExplode}
           active={exploded}
-        />
+        >
+          <ExplodeIcon active={exploded} collapsed={exploded} />
+        </CtrlBtn>
       </View>
 
       {/* Canvas */}
       <View style={styles.canvasContainer} {...panResponder.panHandlers}>
         <Text style={styles.canvasLabel}>Circuit Diagram</Text>
 
-        {/* Dot grid */}
+        {/* Layer 1: Dot grid (background) */}
         <Svg width={canvasW + 16} height={280} style={StyleSheet.absoluteFill}>
           {Array.from({ length: Math.ceil((canvasW + 16) / 24) }, (_, i) =>
             Array.from({ length: Math.ceil(280 / 24) }, (_, j) => (
@@ -343,7 +415,7 @@ function CircuitDiagram({ status, onNodePress }: Props) {
         <Animated.View style={[styles.canvas, {
           transform: [{ translateX: pan.x }, { translateY: pan.y }, { scale: scaleAnim }],
         }]}>
-          {/* Connection lines */}
+          {/* Layer 2: Connection lines */}
           <Svg width={canvasW} height={280} style={StyleSheet.absoluteFill}>
             {CONNECTIONS.map((conn, ci) => {
               const x1 = getNodeX(conn.from) + nodeSize / 2 - 2;
@@ -395,7 +467,7 @@ function CircuitDiagram({ status, onNodePress }: Props) {
             });
           })}
 
-          {/* Nodes */}
+          {/* Layer 3: Nodes */}
           {NODES.map((node, i) => {
             const nx = getNodeX(i);
             const isActive =
@@ -426,11 +498,6 @@ function CircuitDiagram({ status, onNodePress }: Props) {
                     </TouchableOpacity>
                   )}
                 </TouchableOpacity>
-                <View style={[styles.valueBadge, { backgroundColor: `${node.color}15`, borderColor: `${node.color}40` }]}>
-                  <Text style={[styles.valueBadgeText, { color: isActive ? node.color : "rgba(235,235,245,0.3)" }]}>
-                    {nodeValues[i]}
-                  </Text>
-                </View>
                 {exploded && (
                   <View style={[styles.explodeCard, { borderLeftColor: node.color }]}>
                     <Text style={styles.explodeCardName}>{EXPLODE_DESC[node.key].name}</Text>
@@ -438,6 +505,39 @@ function CircuitDiagram({ status, onNodePress }: Props) {
                     <Text style={styles.explodeCardDesc}>{EXPLODE_DESC[node.key].desc}</Text>
                   </View>
                 )}
+              </Animated.View>
+            );
+          })}
+
+          {/* Layer 4: Value badges (rendered AFTER nodes, always on top) (FIX 2) */}
+          {NODES.map((node, i) => {
+            const nx = getNodeX(i);
+            const isActive =
+              i === 0 ? status.solar_watts > 0.1 :
+              i === 4 ? status.phone_connected :
+              (status.solar_watts > 0.1 || status.phone_connected);
+            return (
+              <Animated.View
+                key={`badge-${node.key}`}
+                pointerEvents="none"
+                style={[styles.badgeWrap, {
+                  left: nx - nodeSize / 2,
+                  top: centerY + nodeSize / 2 - 6,
+                  width: nodeSize,
+                  opacity: nodeOpacities[i],
+                  transform: [...nodePositions[i].getTranslateTransform(), { scale: nodeScales[i] }],
+                }]}
+              >
+                <View style={[styles.valueBadge, {
+                  backgroundColor: `${node.color}20`,
+                  borderColor: `${node.color}60`,
+                }]}>
+                  <Text style={[styles.valueBadgeText, {
+                    color: isActive ? node.color : "rgba(235,235,245,0.3)",
+                  }]}>
+                    {nodeValues[i]}
+                  </Text>
+                </View>
               </Animated.View>
             );
           })}
@@ -477,21 +577,21 @@ function CircuitDiagram({ status, onNodePress }: Props) {
             <Animated.View style={[styles.tutorialStep, {
               opacity: tutorialStep.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 0, 0], extrapolate: "clamp" }),
             }]}>
-              <Text style={styles.tutorialIcon}>{"\uD83D\uDC46"}</Text>
+              <Text style={styles.tutorialIcon}>{"\u261D"}</Text>
               <Text style={styles.tutorialText}>Drag</Text>
               <Text style={styles.tutorialSub}>Move the circuit around</Text>
             </Animated.View>
             <Animated.View style={[styles.tutorialStep, {
               opacity: tutorialStep.interpolate({ inputRange: [0.5, 1, 1.5], outputRange: [0, 1, 0], extrapolate: "clamp" }),
             }]}>
-              <Text style={styles.tutorialIcon}>{"\uD83E\uDD0F"}</Text>
+              <Text style={styles.tutorialIcon}>{"\u270B"}</Text>
               <Text style={styles.tutorialText}>Pinch</Text>
               <Text style={styles.tutorialSub}>Pinch to zoom in/out</Text>
             </Animated.View>
             <Animated.View style={[styles.tutorialStep, {
               opacity: tutorialStep.interpolate({ inputRange: [1.5, 2, 2.5], outputRange: [0, 1, 1], extrapolate: "clamp" }),
             }]}>
-              <Text style={styles.tutorialIcon}>{"\uD83D\uDC46"}</Text>
+              <Text style={styles.tutorialIcon}>{"\u261D"}</Text>
               <Text style={styles.tutorialText}>Tap a node</Text>
               <Text style={styles.tutorialSub}>Tap for detailed info</Text>
             </Animated.View>
@@ -505,7 +605,9 @@ function CircuitDiagram({ status, onNodePress }: Props) {
   );
 }
 
-function CtrlBtn({ icon, label, onPress, active }: { icon: string; label: string; onPress: () => void; active?: boolean }) {
+function CtrlBtn({ label, onPress, active, children }: {
+  label: string; onPress: () => void; active?: boolean; children: React.ReactNode;
+}) {
   const s = useRef(new Animated.Value(1)).current;
   return (
     <Animated.View style={{ transform: [{ scale: s }], flex: 1 }}>
@@ -514,7 +616,7 @@ function CtrlBtn({ icon, label, onPress, active }: { icon: string; label: string
         onPressIn={() => Animated.spring(s, { toValue: 0.95, tension: 200, friction: 10, useNativeDriver: true }).start()}
         onPressOut={() => Animated.spring(s, { toValue: 1, tension: 200, friction: 10, useNativeDriver: true }).start()}
         onPress={onPress}>
-        <Text style={styles.ctrlBtnIcon}>{icon}</Text>
+        {children}
         <Text style={[styles.ctrlBtnLabel, active && styles.ctrlBtnLabelActive]}>{label}</Text>
       </TouchableOpacity>
     </Animated.View>
@@ -527,12 +629,12 @@ const styles = StyleSheet.create({
   outer: { gap: 8 },
   controlBar: { flexDirection: "row", gap: 6, marginBottom: 4 },
   ctrlBtn: {
-    backgroundColor: "#2C2C2E", borderRadius: 10, alignItems: "center",
-    justifyContent: "center", paddingVertical: 8, minHeight: 44, minWidth: 44,
+    backgroundColor: "#2C2C2E", borderRadius: 12, alignItems: "center",
+    justifyContent: "center", paddingVertical: 8, width: 64, height: 56,
+    minHeight: 44, minWidth: 44,
   },
   ctrlBtnActive: { backgroundColor: "#FFD60A" },
-  ctrlBtnIcon: { fontSize: 16 },
-  ctrlBtnLabel: { color: "rgba(235,235,245,0.6)", fontSize: 10, fontWeight: "500", marginTop: 2, letterSpacing: -0.2 },
+  ctrlBtnLabel: { color: "rgba(235,235,245,0.6)", fontSize: 10, fontWeight: "500", marginTop: 4, letterSpacing: -0.2 },
   ctrlBtnLabelActive: { color: "#000000" },
   canvasContainer: {
     height: 300, backgroundColor: "#000000", borderRadius: 16,
@@ -544,7 +646,7 @@ const styles = StyleSheet.create({
   },
   canvas: { flex: 1, position: "relative" },
   particle: { position: "absolute", width: 12, height: 12 },
-  nodeWrap: { position: "absolute", alignItems: "center" },
+  nodeWrap: { position: "absolute", alignItems: "center", zIndex: 5 },
   nodeTapTarget: { width: 64, height: 64, alignItems: "center", justifyContent: "center" },
   nodeCard: {
     width: 58, height: 58, borderRadius: 14, backgroundColor: "#2C2C2E",
@@ -557,10 +659,16 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,69,58,0.9)", alignItems: "center", justifyContent: "center",
   },
   dismissText: { color: "#FFFFFF", fontSize: 10, fontWeight: "700" },
-  valueBadge: {
-    marginTop: 4, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, borderWidth: 1,
+  // FIX 2: Badge rendered in separate layer above nodes
+  badgeWrap: {
+    position: "absolute", alignItems: "center",
+    zIndex: 999, elevation: 10,
   },
-  valueBadgeText: { fontSize: 8, fontWeight: "700", letterSpacing: -0.2 },
+  valueBadge: {
+    paddingHorizontal: 6, paddingVertical: 3, borderRadius: 8,
+    borderWidth: 1,
+  },
+  valueBadgeText: { fontSize: 9, fontWeight: "700", letterSpacing: -0.2 },
   explodeCard: {
     marginTop: 6, backgroundColor: "#1C1C1E", borderRadius: 8, borderLeftWidth: 3,
     paddingHorizontal: 8, paddingVertical: 6, width: 100, height: 60,

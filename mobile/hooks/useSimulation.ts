@@ -14,12 +14,15 @@ export interface SimulationStatus {
   phone_connected: boolean;
   efficiency: number;
   charging_status: "charging" | "discharging" | "idle";
+  device_type: string;
 }
 
 export interface ControlInput {
   weather?: string;
   phone_connected?: boolean;
   speed?: number;
+  device_type?: string;
+  consumption_watts?: number;
 }
 
 export function useSimulation(pollInterval = 2000) {

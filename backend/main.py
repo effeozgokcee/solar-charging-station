@@ -60,6 +60,8 @@ async def set_control(control: ControlInput):
         weather=control.weather,
         phone_connected=control.phone_connected,
         speed=control.speed,
+        device_type=control.device_type,
+        consumption_watts=control.consumption_watts,
     )
     return simulator.get_status()
 

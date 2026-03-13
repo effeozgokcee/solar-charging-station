@@ -9,6 +9,7 @@ import AnimatedBattery from "../components/AnimatedBattery";
 import EnergyFlow from "../components/EnergyFlow";
 import InfoDrawer, { DrawerContent } from "../components/InfoDrawer";
 import { useSimulation } from "../hooks/useSimulation";
+import { DEVICES, DEVICE_ICONS } from "../components/DeviceIcons";
 
 const CARD_INFO: Record<string, DrawerContent> = {
   solar: {
@@ -171,7 +172,13 @@ export default function DashboardScreen() {
         <FadeIn delay={400}>
           <View style={styles.statsRow}>
             <TappableStatCard value={status.solar_watts.toFixed(1)} unit="W" label="Solar" color="#FFD60A" infoKey="solar" onPress={openInfo} />
-            <TappableStatCard value={status.consumption_watts.toFixed(1)} unit="W" label="Load" color="#0A84FF" infoKey="consumption" onPress={openInfo} />
+            <TappableStatCard
+              value={status.consumption_watts.toFixed(1)} unit="W"
+              label={status.device_type && status.device_type !== "none"
+                ? (DEVICES.find(d => d.id === status.device_type)?.label || "Load")
+                : "Load"}
+              color="#0A84FF" infoKey="consumption" onPress={openInfo}
+            />
             <TappableStatCard value={status.net_power.toFixed(1)} unit="W" label="Net" color={netColor} infoKey="net" onPress={openInfo} />
           </View>
         </FadeIn>
