@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "SolarChargingStation",
+    "slug": "solar-charging-station",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "scheme": "solar-charging-station",
+    "splash": {
+      "backgroundColor": "#1A1A2E"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#1A1A2E"
+      }
+    },
+    "plugins": ["expo-router"]
+  }
+}
