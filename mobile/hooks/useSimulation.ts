@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
 const API_URL =
-  process.env.EXPO_PUBLIC_API_URL || "http://localhost:8000";
+  process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.1.104:8000";
 
 export interface SimulationStatus {
   time: string;
