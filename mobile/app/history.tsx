@@ -1,3 +1,4 @@
+// -*- coding: utf-8 -*-
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   ScrollView, View, StyleSheet, ActivityIndicator,
@@ -71,10 +72,10 @@ function SegmentControl({ active, onChange }: { active: Tab; onChange: (t: Tab) 
     <View style={styles.segmentOuter}>
       <Animated.View style={[styles.segmentIndicator, { transform: [{ translateX }], width: (screenW - 16) / 2 - 2 }]} />
       <TouchableOpacity style={styles.segmentBtn} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onChange("power"); }}>
-        <Text style={[styles.segmentText, active === "power" && styles.segmentActive]}>Power</Text>
+        <Text style={[styles.segmentText, active === "power" && styles.segmentActive]}>G\u00FC\u00E7</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.segmentBtn} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onChange("battery"); }}>
-        <Text style={[styles.segmentText, active === "battery" && styles.segmentActive]}>Battery</Text>
+        <Text style={[styles.segmentText, active === "battery" && styles.segmentActive]}>Batarya</Text>
       </TouchableOpacity>
     </View>
   );
@@ -94,7 +95,7 @@ export default function HistoryScreen() {
       setHistory(d);
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No data");
+      setError(e instanceof Error ? e.message : "Veri yok");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -120,8 +121,8 @@ export default function HistoryScreen() {
     return (
       <SafeAreaView style={[styles.container, styles.center]}>
         <Text style={{ fontSize: 48 }}>{"\uD83D\uDCC8"}</Text>
-        <Text style={styles.emptyText}>No data yet</Text>
-        <Text style={styles.emptySubtext}>Data will appear as the simulation runs</Text>
+        <Text style={styles.emptyText}>Hen\u00FCz veri yok</Text>
+        <Text style={styles.emptySubtext}>Sim\u00FClasyon \u00E7al\u0131\u015Ft\u0131k\u00E7a veriler burada g\u00F6r\u00FCnecek</Text>
       </SafeAreaView>
     );
   }
@@ -143,10 +144,10 @@ export default function HistoryScreen() {
 
         <FadeIn delay={0}>
           <View style={styles.headerRow}>
-            <Text style={styles.largeTitle}>History</Text>
+            <Text style={styles.largeTitle}>Ge\u00E7mi\u015F</Text>
             {status && <WeatherAnimation weather={status.weather} size={40} />}
           </View>
-          <Text style={styles.subtitle}>{history.length} data points</Text>
+          <Text style={styles.subtitle}>{history.length} veri noktas\u0131</Text>
         </FadeIn>
 
         <FadeIn delay={80}>
@@ -157,7 +158,7 @@ export default function HistoryScreen() {
           <>
             <FadeIn delay={160}>
               <View style={styles.chartCard}>
-                <Text style={styles.chartTitle}>Solar Production</Text>
+                <Text style={styles.chartTitle}>G\u00FCne\u015F \u00DCretimi</Text>
                 <LineChart data={{ labels: lbls, datasets: [{ data: safe(solarD) }] }}
                   width={screenW - 32} height={200} chartConfig={solarConfig} bezier
                   style={styles.chart} withVerticalLines={false} />
@@ -165,7 +166,7 @@ export default function HistoryScreen() {
             </FadeIn>
             <FadeIn delay={240}>
               <View style={styles.chartCard}>
-                <Text style={styles.chartTitle}>Consumption</Text>
+                <Text style={styles.chartTitle}>T\u00FCketim</Text>
                 <LineChart data={{ labels: lbls, datasets: [{ data: safe(loadD) }] }}
                   width={screenW - 32} height={200} chartConfig={loadConfig} bezier
                   style={styles.chart} withVerticalLines={false} />
@@ -175,7 +176,7 @@ export default function HistoryScreen() {
         ) : (
           <FadeIn delay={160}>
             <View style={styles.chartCard}>
-              <Text style={styles.chartTitle}>Battery Level</Text>
+              <Text style={styles.chartTitle}>Batarya Seviyesi</Text>
               <LineChart data={{ labels: lbls, datasets: [{ data: safe(battD) }] }}
                 width={screenW - 32} height={220} chartConfig={battConfig} bezier
                 style={styles.chart} withVerticalLines={false} fromZero />
@@ -185,9 +186,9 @@ export default function HistoryScreen() {
 
         <FadeIn delay={320}>
           <View style={styles.summaryRow}>
-            <SummaryItem label="Peak" value={`${peakSolar}W`} color="#FFD60A" />
-            <SummaryItem label="Points" value={`${history.length}`} color="#0A84FF" />
-            <SummaryItem label="Avg Batt" value={`${avgBattery}%`} color="#30D158" />
+            <SummaryItem label="Zirve" value={`${peakSolar}W`} color="#FFD60A" />
+            <SummaryItem label="Veri" value={`${history.length}`} color="#0A84FF" />
+            <SummaryItem label="Ort. Batarya" value={`${avgBattery}%`} color="#30D158" />
           </View>
         </FadeIn>
       </ScrollView>
@@ -219,14 +220,14 @@ const styles = StyleSheet.create({
     position: "absolute", top: 2, height: 28, backgroundColor: "#FFFFFF",
     borderRadius: 7, shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 2, shadowOffset: { width: 0, height: 1 },
   },
-  segmentBtn: { flex: 1, justifyContent: "center", alignItems: "center", zIndex: 1 },
+  segmentBtn: { flex: 1, justifyContent: "center", alignItems: "center", zIndex: 1, minHeight: 44 },
   segmentText: { color: "rgba(235,235,245,0.6)", fontSize: 13, fontWeight: "600", letterSpacing: -0.3 },
   segmentActive: { color: "#000000" },
   chartCard: { backgroundColor: "#1C1C1E", borderRadius: 20, padding: 16, marginVertical: 6 },
   chartTitle: { color: "rgba(235,235,245,0.6)", fontSize: 13, fontWeight: "600", letterSpacing: -0.3, marginBottom: 12 },
   chart: { borderRadius: 12 },
   summaryRow: { flexDirection: "row", gap: 8, marginTop: 8 },
-  summaryCard: { flex: 1, backgroundColor: "#1C1C1E", borderRadius: 12, paddingVertical: 14, alignItems: "center" },
+  summaryCard: { flex: 1, backgroundColor: "#1C1C1E", borderRadius: 12, paddingVertical: 14, alignItems: "center", minHeight: 44 },
   summaryValue: { fontSize: 20, fontWeight: "700", letterSpacing: -0.5 },
   summaryLabel: { color: "rgba(235,235,245,0.3)", fontSize: 12, marginTop: 4, letterSpacing: -0.3 },
   errorText: { color: "#FF453A", fontSize: 17, fontWeight: "700", marginTop: 16 },

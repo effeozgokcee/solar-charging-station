@@ -1,6 +1,7 @@
+// -*- coding: utf-8 -*-
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
-  ScrollView, View, StyleSheet, Alert, TouchableOpacity, Animated, Easing,
+  ScrollView, View, StyleSheet, Alert, TouchableOpacity, Animated, Easing, Dimensions,
 } from "react-native";
 import { Text, Switch, Snackbar } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -8,12 +9,14 @@ import * as Haptics from "expo-haptics";
 import WeatherAnimation from "../components/WeatherAnimation";
 import { useSimulation } from "../hooks/useSimulation";
 
+const SCREEN_W = Dimensions.get("window").width;
+
 const SPEED_OPTIONS = [1, 5, 10, 60];
 const WEATHER_OPTIONS = [
-  { key: "sunny", label: "Sunny" },
-  { key: "partly_cloudy", label: "Partly Cloudy" },
-  { key: "cloudy", label: "Cloudy" },
-  { key: "night", label: "Night" },
+  { key: "sunny", label: "G\u00FCne\u015Fli" },
+  { key: "partly_cloudy", label: "Par\u00E7al\u0131 Bulutlu" },
+  { key: "cloudy", label: "Bulutlu" },
+  { key: "night", label: "Gece" },
 ];
 
 function FadeIn({ delay = 0, children }: { delay?: number; children: React.ReactNode }) {
@@ -33,7 +36,7 @@ function PressableRow({ children, onPress }: { children: React.ReactNode; onPres
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
       <TouchableOpacity activeOpacity={0.8}
-        onPressIn={() => Animated.spring(scale, { toValue: 0.96, tension: 200, friction: 10, useNativeDriver: true }).start()}
+        onPressIn={() => Animated.spring(scale, { toValue: 0.97, tension: 200, friction: 10, useNativeDriver: true }).start()}
         onPressOut={() => Animated.spring(scale, { toValue: 1, tension: 200, friction: 10, useNativeDriver: true }).start()}
         onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress(); }}>
         {children}
@@ -57,13 +60,13 @@ export default function ControlScreen() {
   const handleWeather = async (w: string) => {
     setWeather(w);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    try { await sendControl({ weather: w }); toast("Weather updated"); } catch { toast("Error: connection failed"); }
+    try { await sendControl({ weather: w }); toast("Hava durumu g\u00FCncellendi"); } catch { toast("Hata: ba\u011Flant\u0131 kurulamad\u0131"); }
   };
 
   const handlePhone = async (v: boolean) => {
     setPhoneConnected(v);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    try { await sendControl({ phone_connected: v }); toast(v ? "Phone connected" : "Phone disconnected"); } catch { toast("Error"); }
+    try { await sendControl({ phone_connected: v }); toast(v ? "Telefon ba\u011Fland\u0131" : "Telefon \u00E7\u0131kar\u0131ld\u0131"); } catch { toast("Hata"); }
   };
 
   const handleSpeed = async (s: number) => {
@@ -71,46 +74,44 @@ export default function ControlScreen() {
     Animated.spring(speedSlide, { toValue: idx, tension: 80, friction: 12, useNativeDriver: true }).start();
     setSpeed(s);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    try { await sendControl({ speed: s }); toast(`Speed: ${s}x`); } catch { toast("Error"); }
+    try { await sendControl({ speed: s }); toast(`H\u0131z: ${s}x`); } catch { toast("Hata"); }
   };
 
   const handleReset = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    Alert.alert("Reset Simulation", "This will reset all simulation data.", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert("Sim\u00FClasyonu S\u0131f\u0131rla", "T\u00FCm sim\u00FClasyon verileri s\u0131f\u0131rlanacak.", [
+      { text: "\u0130ptal", style: "cancel" },
       {
-        text: "Reset", style: "destructive",
+        text: "S\u0131f\u0131rla", style: "destructive",
         onPress: async () => {
           try {
             await resetSimulation();
             setWeather("sunny"); setPhoneConnected(false); setSpeed(1); speedSlide.setValue(0);
-            toast("Simulation reset");
-          } catch { toast("Error"); }
+            toast("Sim\u00FClasyon s\u0131f\u0131rland\u0131");
+          } catch { toast("Hata"); }
         },
       },
     ]);
   };
 
-  const segW = (Dimensions_width - 48) / 4;
+  const segW = (SCREEN_W - 48) / 4;
   const slideX = speedSlide.interpolate({ inputRange: [0, 1, 2, 3], outputRange: [2, segW + 2, segW * 2 + 2, segW * 3 + 2] });
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} bounces>
         <FadeIn delay={0}>
-          <Text style={styles.largeTitle}>Settings</Text>
+          <Text style={styles.largeTitle}>Kontrol</Text>
         </FadeIn>
 
-        {/* Weather Preview */}
         <FadeIn delay={80}>
           <View style={styles.previewRow}>
             <WeatherAnimation weather={weather} size={64} />
           </View>
         </FadeIn>
 
-        {/* Weather Section */}
         <FadeIn delay={160}>
-          <Text style={styles.sectionHeader}>WEATHER</Text>
+          <Text style={styles.sectionHeader}>HAVA DURUMU</Text>
           <View style={styles.groupCard}>
             {WEATHER_OPTIONS.map((opt, i) => (
               <PressableRow key={opt.key} onPress={() => handleWeather(opt.key)}>
@@ -126,26 +127,24 @@ export default function ControlScreen() {
           </View>
         </FadeIn>
 
-        {/* Phone Toggle */}
         <FadeIn delay={240}>
-          <Text style={styles.sectionHeader}>DEVICE</Text>
+          <Text style={styles.sectionHeader}>C\u0130HAZ</Text>
           <View style={styles.groupCard}>
             <View style={styles.listRow}>
               <View style={styles.listRowLeft}>
                 <Text style={{ fontSize: 20 }}>{"\uD83D\uDCF1"}</Text>
-                <Text style={styles.listRowText}>Phone Connected</Text>
+                <Text style={styles.listRowText}>Telefon Ba\u011Fl\u0131</Text>
               </View>
               <Switch value={phoneConnected} onValueChange={handlePhone} color="#30D158" />
             </View>
           </View>
           <Text style={styles.footnote}>
-            {phoneConnected ? "Phone is charging at 5W via USB" : "No device connected"}
+            {phoneConnected ? "Telefon USB \u00FCzerinden 5W ile \u015Farj oluyor" : "Cihaz ba\u011Fl\u0131 de\u011Fil"}
           </Text>
         </FadeIn>
 
-        {/* Speed */}
         <FadeIn delay={320}>
-          <Text style={styles.sectionHeader}>SIMULATION SPEED</Text>
+          <Text style={styles.sectionHeader}>S\u0130M\u00DCLASYON HIZI</Text>
           <View style={styles.segmentOuter}>
             <Animated.View style={[styles.segmentIndicator, { transform: [{ translateX: slideX }], width: segW - 4 }]} />
             {SPEED_OPTIONS.map((s) => (
@@ -155,26 +154,24 @@ export default function ControlScreen() {
               </TouchableOpacity>
             ))}
           </View>
-          <Text style={styles.footnote}>Every 2 seconds advances {speed} minute(s)</Text>
+          <Text style={styles.footnote}>Her 2 saniyede {speed} dakika ilerler</Text>
         </FadeIn>
 
-        {/* Status */}
         {status && (
           <FadeIn delay={400}>
-            <Text style={styles.sectionHeader}>CURRENT STATUS</Text>
+            <Text style={styles.sectionHeader}>MEVCUT DURUM</Text>
             <View style={styles.groupCard}>
-              <InfoRow label="Time" value={status.time} border />
-              <InfoRow label="Battery" value={`${status.battery_percent}%`} border />
-              <InfoRow label="Solar" value={`${status.solar_watts}W`} border />
-              <InfoRow label="Consumption" value={`${status.consumption_watts}W`} />
+              <InfoRow label="Saat" value={status.time} border />
+              <InfoRow label="Batarya" value={`${status.battery_percent}%`} border />
+              <InfoRow label="G\u00FCne\u015F" value={`${status.solar_watts}W`} border />
+              <InfoRow label="T\u00FCketim" value={`${status.consumption_watts}W`} />
             </View>
           </FadeIn>
         )}
 
-        {/* Reset */}
         <FadeIn delay={480}>
-          <TouchableOpacity style={styles.resetBtn} onPress={handleReset}>
-            <Text style={styles.resetText}>Reset Simulation</Text>
+          <TouchableOpacity style={styles.resetBtn} onPress={handleReset} activeOpacity={0.7}>
+            <Text style={styles.resetText}>Sim\u00FClasyonu S\u0131f\u0131rla</Text>
           </TouchableOpacity>
         </FadeIn>
       </ScrollView>
@@ -193,10 +190,6 @@ function InfoRow({ label, value, border }: { label: string; value: string; borde
     </View>
   );
 }
-
-// Get screen width for segment sizing
-import { Dimensions } from "react-native";
-const Dimensions_width = Dimensions.get("window").width;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000000" },
@@ -226,10 +219,10 @@ const styles = StyleSheet.create({
     position: "absolute", top: 2, height: 28, backgroundColor: "#FFFFFF",
     borderRadius: 7, shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 2, shadowOffset: { width: 0, height: 1 },
   },
-  segmentBtn: { flex: 1, justifyContent: "center", alignItems: "center", zIndex: 1 },
+  segmentBtn: { flex: 1, justifyContent: "center", alignItems: "center", zIndex: 1, minHeight: 44 },
   segmentText: { color: "rgba(235,235,245,0.6)", fontSize: 13, fontWeight: "600", letterSpacing: -0.3 },
   segmentActive: { color: "#000000" },
-  resetBtn: { marginTop: 32, alignItems: "center", paddingVertical: 14 },
+  resetBtn: { marginTop: 32, alignItems: "center", paddingVertical: 14, minHeight: 44 },
   resetText: { color: "#FF453A", fontSize: 17, fontWeight: "400", letterSpacing: -0.3 },
   snackbar: { backgroundColor: "#1C1C1E" },
 });

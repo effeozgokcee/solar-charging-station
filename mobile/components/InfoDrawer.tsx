@@ -1,3 +1,4 @@
+// -*- coding: utf-8 -*-
 import React, { useEffect, useRef, memo } from "react";
 import {
   View, StyleSheet, Animated, TouchableWithoutFeedback,
@@ -82,11 +83,11 @@ function InfoDrawer({ visible, content, onClose }: Props) {
             </View>
 
             <View style={styles.formulaCard}>
-              <Text style={styles.formulaLabel}>FORMUL</Text>
+              <Text style={styles.formulaLabel}>FORM\u00DCL</Text>
               <Text style={styles.formulaText}>{content.formula}</Text>
             </View>
 
-            <Text style={styles.sectionLabel}>ACIKLAMA</Text>
+            <Text style={styles.sectionLabel}>A\u00C7IKLAMA</Text>
             <Text style={styles.explanation}>{content.explanation}</Text>
 
             <View style={styles.funFactCard}>
@@ -119,7 +120,7 @@ const styles = StyleSheet.create({
   title: { color: "#FFFFFF", fontSize: 22, fontWeight: "700", letterSpacing: -0.3, marginBottom: 16 },
   unitRow: {
     flexDirection: "row", justifyContent: "space-between", alignItems: "center",
-    backgroundColor: "#2C2C2E", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 16,
+    backgroundColor: "#2C2C2E", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 16, minHeight: 44,
   },
   unitLabel: { color: "rgba(235,235,245,0.6)", fontSize: 15, letterSpacing: -0.3 },
   unitValue: { color: "#FFD60A", fontSize: 15, fontWeight: "600", letterSpacing: -0.3 },
@@ -128,7 +129,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3, borderLeftColor: "#FFD60A",
   },
   formulaLabel: { color: "rgba(235,235,245,0.3)", fontSize: 11, fontWeight: "600", letterSpacing: 0.5, marginBottom: 6 },
-  formulaText: { color: "#FFFFFF", fontSize: 20, fontWeight: "600", letterSpacing: -0.3, fontFamily: "monospace" },
+  formulaText: { color: "#FFFFFF", fontSize: 20, fontWeight: "600", letterSpacing: -0.3 },
   sectionLabel: { color: "rgba(235,235,245,0.3)", fontSize: 11, fontWeight: "600", letterSpacing: 0.5, marginBottom: 8 },
   explanation: { color: "rgba(235,235,245,0.85)", fontSize: 16, lineHeight: 24, letterSpacing: -0.3, marginBottom: 16 },
   funFactCard: {
