@@ -7,7 +7,14 @@ import { Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
 import { LineChart } from "react-native-chart-kit";
-import * as Haptics from "expo-haptics";
+import { Platform } from "react-native";
+
+const haptic = async () => {
+  if (Platform.OS !== "web") {
+    const H = await import("expo-haptics");
+    H.impactAsync(H.ImpactFeedbackStyle.Light);
+  }
+};
 import WeatherAnimation from "../components/WeatherAnimation";
 import { useSimulation, SimulationStatus } from "../hooks/useSimulation";
 
@@ -70,10 +77,10 @@ function SegmentControl({ active, onChange }: { active: Tab; onChange: (t: Tab) 
   return (
     <View style={styles.segmentOuter}>
       <Animated.View style={[styles.segmentIndicator, { transform: [{ translateX }], width: (screenW - 16) / 2 - 2 }]} />
-      <TouchableOpacity style={styles.segmentBtn} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onChange("power"); }}>
+      <TouchableOpacity style={styles.segmentBtn} onPress={() => { haptic(); onChange("power"); }}>
         <Text style={[styles.segmentText, active === "power" && styles.segmentActive]}>Power</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.segmentBtn} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onChange("battery"); }}>
+      <TouchableOpacity style={styles.segmentBtn} onPress={() => { haptic(); onChange("battery"); }}>
         <Text style={[styles.segmentText, active === "battery" && styles.segmentActive]}>Battery</Text>
       </TouchableOpacity>
     </View>

@@ -104,7 +104,8 @@ function DeviceSelector({ selected, onSelect }: {
   selected: string;
   onSelect: (id: string, watts: number) => void;
 }) {
-  const cardWidth = (SCREEN_W - 64 - 16) / 3;
+  const horizontalPad = 40 + 16; // screen padding + gaps
+  const cardWidth = Math.floor((SCREEN_W - horizontalPad) / 3);
 
   return (
     <View style={styles.deviceGrid}>

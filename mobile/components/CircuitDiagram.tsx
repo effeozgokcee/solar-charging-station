@@ -7,7 +7,26 @@ import { Text } from "react-native-paper";
 import Svg, {
   Circle, Line as SvgLine, Rect, Text as SvgText, G, Polygon,
 } from "react-native-svg";
-import * as Haptics from "expo-haptics";
+import { Platform } from "react-native";
+
+const hapticLight = async () => {
+  if (Platform.OS !== "web") {
+    const H = await import("expo-haptics");
+    H.impactAsync(H.ImpactFeedbackStyle.Light);
+  }
+};
+const hapticMedium = async () => {
+  if (Platform.OS !== "web") {
+    const H = await import("expo-haptics");
+    H.impactAsync(H.ImpactFeedbackStyle.Medium);
+  }
+};
+const hapticSuccess = async () => {
+  if (Platform.OS !== "web") {
+    const H = await import("expo-haptics");
+    H.notificationAsync(H.NotificationFeedbackType.Success);
+  }
+};
 import { SimulationStatus } from "../hooks/useSimulation";
 import { DrawerContent } from "./InfoDrawer";
 
@@ -266,7 +285,7 @@ function CircuitDiagram({ status, onNodePress }: Props) {
 
   // --- Control bar actions ---
   const handleZoomIn = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    hapticLight();
     const nz = Math.min(2.5, lastScaleRef.current + 0.25);
     lastScaleRef.current = nz;
     setCurrentZoom(nz);
@@ -274,7 +293,7 @@ function CircuitDiagram({ status, onNodePress }: Props) {
   };
 
   const handleZoomOut = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    hapticLight();
     const nz = Math.max(0.5, lastScaleRef.current - 0.25);
     lastScaleRef.current = nz;
     setCurrentZoom(nz);
@@ -282,7 +301,7 @@ function CircuitDiagram({ status, onNodePress }: Props) {
   };
 
   const handleReset = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    hapticSuccess();
     lastScaleRef.current = 1;
     setCurrentZoom(1);
     setFocusedNode(null);
@@ -297,7 +316,7 @@ function CircuitDiagram({ status, onNodePress }: Props) {
   };
 
   const handleExplode = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    hapticMedium();
     const next = !exploded;
     setExploded(next);
     if (next) {
@@ -319,7 +338,7 @@ function CircuitDiagram({ status, onNodePress }: Props) {
 
   // --- Node tap ---
   const handleNodeTap = useCallback((idx: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    hapticLight();
     if (focusedNode === idx) {
       setFocusedNode(null);
       NODES.forEach((_, i) => {
@@ -554,7 +573,7 @@ function CircuitDiagram({ status, onNodePress }: Props) {
         style={styles.infoStrip} contentContainerStyle={styles.infoStripContent}>
         {infoChips.map((chip) => (
           <TouchableOpacity key={chip.label} activeOpacity={0.7}
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onNodePress(NODE_INFO[chip.nodeKey]); }}
+            onPress={() => { hapticLight(); onNodePress(NODE_INFO[chip.nodeKey]); }}
             style={[styles.infoChip, {
               borderColor: chip.active ? `${chip.color}50` : "transparent",
               backgroundColor: chip.active ? `${chip.color}10` : "#2C2C2E",
