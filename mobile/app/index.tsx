@@ -10,6 +10,8 @@ import EnergyFlow from "../components/EnergyFlow";
 import InfoDrawer, { DrawerContent } from "../components/InfoDrawer";
 import { useSimulation } from "../hooks/useSimulation";
 import { DEVICES, DEVICE_ICONS } from "../components/DeviceIcons";
+import DeviceBatteryCard from "../components/DeviceBatteryCard";
+import { useDeviceBattery } from "../hooks/useDeviceBattery";
 
 const CARD_INFO: Record<string, DrawerContent> = {
   solar: {
@@ -88,6 +90,7 @@ function TappableStatCard({ value, unit, label, color, infoKey, onPress }: {
 
 export default function DashboardScreen() {
   const { status, error, loading } = useSimulation();
+  const battery = useDeviceBattery();
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [drawerContent, setDrawerContent] = useState<DrawerContent | null>(null);
 
@@ -184,6 +187,18 @@ export default function DashboardScreen() {
         </FadeIn>
 
         <FadeIn delay={480}>
+          <Text style={styles.sectionLabel}>DEVICE BATTERY</Text>
+          <DeviceBatteryCard
+            percent={battery.percent}
+            isCharging={battery.isCharging}
+            stateLabel={battery.stateLabel}
+            isLow={battery.isLow}
+            lowPowerMode={battery.lowPowerMode}
+            simPercent={status.battery_percent}
+          />
+        </FadeIn>
+
+        <FadeIn delay={560}>
           <TouchableOpacity onPress={() => openInfo("efficiency")} activeOpacity={0.8}>
             <View style={styles.efficiencyRow}>
               <View style={styles.efficiencyLeft}>
@@ -241,6 +256,10 @@ const styles = StyleSheet.create({
   efficiencyRight: { flex: 1 },
   effLabel: { color: "rgba(235,235,245,0.3)", fontSize: 12, letterSpacing: -0.3 },
   effValue: { color: "#FFFFFF", fontSize: 20, fontWeight: "700", letterSpacing: -0.5, marginTop: 2 },
+  sectionLabel: {
+    color: "rgba(235,235,245,0.6)", fontSize: 13, fontWeight: "400",
+    letterSpacing: -0.1, marginTop: 16, marginBottom: 4, marginLeft: 4,
+  },
   loadingText: { color: "rgba(235,235,245,0.6)", marginTop: 12, fontSize: 15 },
   errorTitle: { color: "#FF453A", fontSize: 20, fontWeight: "700", marginTop: 16 },
   errorDetail: { color: "rgba(235,235,245,0.3)", fontSize: 15, marginTop: 4 },

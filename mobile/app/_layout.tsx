@@ -51,6 +51,14 @@ export default function Layout() {
           }}
         />
         <Tabs.Screen
+          name="device"
+          options={{
+            title: "Battery",
+            headerShown: false,
+            tabBarIcon: ({ color }) => <TabIcon label={"\uD83D\uDD0B"} color={color} />,
+          }}
+        />
+        <Tabs.Screen
           name="control"
           options={{
             title: "Settings",
