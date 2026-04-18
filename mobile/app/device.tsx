@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
   compLabel: { color: "rgba(235,235,245,0.5)", fontSize: 14, fontWeight: "500" },
   compValue: { fontSize: 16, fontWeight: "700", letterSpacing: -0.3 },
   barTrack: { height: 6, backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 3, overflow: "hidden" },
-  barFill: { height: 6, borderRadius: 3, transformOrigin: "left" },
+  barFill: { height: 6, borderRadius: 3 },
   diffText: { color: "rgba(235,235,245,0.25)", fontSize: 12, marginTop: 12, textAlign: "center" },
   updatedText: { color: "rgba(235,235,245,0.15)", fontSize: 11, textAlign: "center", marginTop: 12 },
   errorTitle: { color: "#FF453A", fontSize: 20, fontWeight: "700", marginTop: 20 },

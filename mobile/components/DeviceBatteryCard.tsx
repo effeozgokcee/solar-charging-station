@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
   barTrack: {
     height: 6, backgroundColor: "#2C2C2E", borderRadius: 3, overflow: "hidden",
   },
-  barFill: { height: 6, borderRadius: 3, transformOrigin: "left" },
+  barFill: { height: 6, borderRadius: 3 },
   diffText: {
     color: "rgba(235,235,245,0.3)", fontSize: 12, letterSpacing: -0.2, marginTop: 8, textAlign: "center",
   },

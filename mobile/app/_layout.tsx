@@ -3,10 +3,11 @@ import { StatusBar } from "expo-status-bar";
 import { View, Text, Platform } from "react-native";
 
 function TabIcon({ label, color }: { label: string; color: string }) {
-  return <Text style={{ fontSize: 20, color }}>{label}</Text>;
+  return <Text style={{ fontSize: 22, color, lineHeight: 26 }}>{label}</Text>;
 }
 
 export default function Layout() {
+  const isWeb = Platform.OS === "web";
   return (
     <View style={{ flex: 1, backgroundColor: "#000000" }}>
       <StatusBar style="light" />
@@ -14,23 +15,25 @@ export default function Layout() {
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: "rgba(10,10,10,0.95)",
-            borderTopWidth: 0,
+            backgroundColor: "#0A0A0A",
+            borderTopWidth: 0.5,
+            borderTopColor: "rgba(255,255,255,0.08)",
             elevation: 0,
-            height: Platform.OS === "web" ? 60 : 80,
+            height: isWeb ? 56 : 88,
             paddingTop: 6,
-            paddingBottom: Platform.OS === "web" ? 8 : 26,
+            paddingBottom: isWeb ? 6 : 30,
           },
           tabBarActiveTintColor: "#FFD60A",
-          tabBarInactiveTintColor: "rgba(235,235,245,0.25)",
-          tabBarLabelStyle: { fontSize: 10, fontWeight: "600", letterSpacing: 0.2, marginTop: 2 },
+          tabBarInactiveTintColor: "rgba(235,235,245,0.3)",
+          tabBarLabelStyle: { fontSize: 10, fontWeight: "500", marginTop: 2 },
+          tabBarIconStyle: { marginBottom: -2 },
         }}
       >
-        <Tabs.Screen name="index" options={{ title: "Dashboard", tabBarIcon: ({ color }) => <TabIcon label={"\u2600"} color={color} /> }} />
-        <Tabs.Screen name="history" options={{ title: "History", tabBarIcon: ({ color }) => <TabIcon label={"\u2197"} color={color} /> }} />
+        <Tabs.Screen name="index" options={{ title: "Dashboard", tabBarIcon: ({ color }) => <TabIcon label={"\u2600\uFE0F"} color={color} /> }} />
+        <Tabs.Screen name="history" options={{ title: "History", tabBarIcon: ({ color }) => <TabIcon label={"\uD83D\uDCC8"} color={color} /> }} />
         <Tabs.Screen name="system" options={{ title: "System", tabBarIcon: ({ color }) => <TabIcon label={"\u26A1"} color={color} /> }} />
-        <Tabs.Screen name="device" options={{ title: "Cihaz", tabBarIcon: ({ color }) => <TabIcon label={"\u25AE"} color={color} />, tabBarActiveTintColor: "#30D158" }} />
-        <Tabs.Screen name="control" options={{ title: "Settings", tabBarIcon: ({ color }) => <TabIcon label={"\u2699"} color={color} /> }} />
+        <Tabs.Screen name="device" options={{ title: "Cihaz", tabBarIcon: ({ color }) => <TabIcon label={"\uD83D\uDD0B"} color={color} />, tabBarActiveTintColor: "#30D158" }} />
+        <Tabs.Screen name="control" options={{ title: "Settings", tabBarIcon: ({ color }) => <TabIcon label={"\u2699\uFE0F"} color={color} /> }} />
       </Tabs>
     </View>
   );
