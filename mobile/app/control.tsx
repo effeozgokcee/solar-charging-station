@@ -4,7 +4,16 @@ import {
 } from "react-native";
 import { Text, Snackbar } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import * as Haptics from "expo-haptics";
+import { Platform } from "react-native";
+
+const haptic = async (style?: string) => {
+  if (Platform.OS !== "web") {
+    const H = await import("expo-haptics");
+    if (style === "medium") H.impactAsync(H.ImpactFeedbackStyle.Medium);
+    else if (style === "warning") H.notificationAsync(H.NotificationFeedbackType.Warning);
+    else H.impactAsync(H.ImpactFeedbackStyle.Light);
+  }
+};
 import WeatherIcon from "../components/WeatherIcons";
 import { DEVICES, DEVICE_ICONS } from "../components/DeviceIcons";
 import { useSimulation } from "../hooks/useSimulation";
@@ -38,7 +47,7 @@ function PressableRow({ children, onPress }: { children: React.ReactNode; onPres
       <TouchableOpacity activeOpacity={0.8}
         onPressIn={() => Animated.spring(scale, { toValue: 0.97, tension: 200, friction: 10, useNativeDriver: true }).start()}
         onPressOut={() => Animated.spring(scale, { toValue: 1, tension: 200, friction: 10, useNativeDriver: true }).start()}
-        onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress(); }}>
+        onPress={() => { haptic(); onPress(); }}>
         {children}
       </TouchableOpacity>
     </Animated.View>
@@ -105,7 +114,7 @@ function DeviceSelector({ selected, onSelect }: {
         const scaleRef = useRef(new Animated.Value(1)).current;
 
         const handlePress = () => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          haptic("medium");
           Animated.sequence([
             Animated.spring(scaleRef, { toValue: 0.95, tension: 200, friction: 10, useNativeDriver: true }),
             Animated.spring(scaleRef, { toValue: 1.05, tension: 200, friction: 10, useNativeDriver: true }),
@@ -153,7 +162,7 @@ export default function ControlScreen() {
 
   const handleWeather = async (w: string) => {
     setWeather(w);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    haptic();
     try { await sendControl({ weather: w }); toast("Weather updated"); } catch { toast("Error: connection failed"); }
   };
 
@@ -171,12 +180,12 @@ export default function ControlScreen() {
 
   const handleSpeed = async (s: number) => {
     setSpeed(s);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    haptic();
     try { await sendControl({ speed: s }); toast(`Speed: ${s}x`); } catch { toast("Error"); }
   };
 
   const handleReset = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    haptic("warning");
     Alert.alert("Reset Simulation", "All simulation data will be reset.", [
       { text: "Cancel", style: "cancel" },
       {

@@ -2,8 +2,15 @@ import React, { useState, useEffect, useRef } from "react";
 import { ScrollView, View, StyleSheet, ActivityIndicator, Animated, TouchableOpacity, Dimensions } from "react-native";
 import { Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import * as Haptics from "expo-haptics";
+import { Platform } from "react-native";
 import Svg, { Circle, Rect, Line as SvgLine, LinearGradient, Stop, Defs } from "react-native-svg";
+
+const haptic = async () => {
+  if (Platform.OS !== "web") {
+    const Haptics = await import("expo-haptics");
+    haptic();
+  }
+};
 import WeatherAnimation from "../components/WeatherAnimation";
 import SunCycle from "../components/SunCycle";
 import AnimatedBattery from "../components/AnimatedBattery";
@@ -77,7 +84,7 @@ function GlowCard({ children, style, onPress }: { children: React.ReactNode; sty
     <TouchableOpacity activeOpacity={0.9}
       onPressIn={() => Animated.spring(scale, { toValue: 0.97, tension: 300, friction: 10, useNativeDriver: true }).start()}
       onPressOut={() => Animated.spring(scale, { toValue: 1, tension: 300, friction: 10, useNativeDriver: true }).start()}
-      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress(); }}>
+      onPress={() => { haptic(); onPress(); }}>
       {content}
     </TouchableOpacity>
   );
@@ -102,7 +109,7 @@ export default function DashboardScreen() {
   const [drawerContent, setDrawerContent] = useState<DrawerContent | null>(null);
 
   const openInfo = (key: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    haptic();
     setDrawerContent(CARD_INFO[key]);
     setDrawerVisible(true);
   };
