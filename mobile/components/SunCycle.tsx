@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, memo } from "react";
 import { View, Animated, StyleSheet } from "react-native";
-import Svg, { Path, Circle, Defs, LinearGradient, Stop, Text as SvgText } from "react-native-svg";
+import Svg, { Path, Circle, Rect, Defs, LinearGradient, Stop, Text as SvgText } from "react-native-svg";
 
 interface SunCycleProps {
   time: string;
@@ -61,7 +61,7 @@ function SunCycle({ time }: SunCycleProps) {
             <Stop offset="1" stopColor={skyBottom} />
           </LinearGradient>
         </Defs>
-        <Path d={`M 0 0 H ${w} V ${h} H 0 Z`} fill="url(#sky)" rx={20} />
+        <Rect x={0} y={0} width={w} height={h} fill="url(#sky)" rx={20} />
         <Path d={arcPath} stroke="rgba(255,255,255,0.08)" strokeWidth={1.5} fill="none" strokeDasharray="4,6" />
         <SvgText x={cx - arcR + 8} y={baseY + 14} fill="rgba(235,235,245,0.3)" fontSize={11} fontWeight="400">6 AM</SvgText>
         <SvgText x={cx - 10} y={baseY - arcR - 6} fill="rgba(235,235,245,0.3)" fontSize={11} fontWeight="400">12 PM</SvgText>

@@ -187,7 +187,7 @@ export default function DashboardScreen() {
         </FadeIn>
 
         <FadeIn delay={480}>
-          <Text style={styles.sectionLabel}>DEVICE BATTERY</Text>
+          <Text style={styles.sectionLabel}>GERCEK CIHAZ VERISI</Text>
           <DeviceBatteryCard
             percent={battery.percent}
             isCharging={battery.isCharging}

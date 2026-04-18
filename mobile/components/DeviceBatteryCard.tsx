@@ -89,10 +89,10 @@ function DeviceBatteryCard({ percent, isCharging, stateLabel, isLow, lowPowerMod
     <View style={styles.card}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Device Battery</Text>
+        <Text style={styles.headerTitle}>Cihaz Pili</Text>
         <View style={styles.liveBadge}>
           <View style={styles.liveDot} />
-          <Text style={styles.liveText}>LIVE</Text>
+          <Text style={styles.liveText}>CANLI</Text>
         </View>
       </View>
 
@@ -126,16 +126,16 @@ function DeviceBatteryCard({ percent, isCharging, stateLabel, isLow, lowPowerMod
 
         {/* Stats */}
         <View style={styles.statsColumn}>
-          <StatItem label="Battery" value={`${percent}%`} color={color} />
-          <StatItem label="Status" value={stateLabel} color={isCharging ? "#30D158" : "#FFFFFF"} />
-          <StatItem label="Low Power" value={lowPowerMode ? "On" : "Off"} color={lowPowerMode ? "#FF9F0A" : "rgba(235,235,245,0.4)"} />
+          <StatItem label="Pil Seviyesi" value={`${percent}%`} color={color} />
+          <StatItem label="Durum" value={stateLabel} color={isCharging ? "#30D158" : "#FFFFFF"} />
+          <StatItem label="Guc Tasarrufu" value={lowPowerMode ? "Acik" : "Kapali"} color={lowPowerMode ? "#FF9F0A" : "rgba(235,235,245,0.4)"} />
         </View>
       </View>
 
       {/* Comparison bars */}
       <View style={styles.compSection}>
         <View style={styles.compRow}>
-          <Text style={styles.compLabel}>Your Device</Text>
+          <Text style={styles.compLabel}>Cihazin</Text>
           <Text style={[styles.compValue, { color }]}>{percent}%</Text>
         </View>
         <View style={styles.barTrack}>
@@ -143,7 +143,7 @@ function DeviceBatteryCard({ percent, isCharging, stateLabel, isLow, lowPowerMod
         </View>
 
         <View style={[styles.compRow, { marginTop: 10 }]}>
-          <Text style={styles.compLabel}>Simulation</Text>
+          <Text style={styles.compLabel}>Simulasyon</Text>
           <Text style={[styles.compValue, { color: "#FFD60A" }]}>{simPercent.toFixed(1)}%</Text>
         </View>
         <View style={styles.barTrack}>
@@ -151,7 +151,7 @@ function DeviceBatteryCard({ percent, isCharging, stateLabel, isLow, lowPowerMod
         </View>
 
         <Text style={styles.diffText}>
-          {diff > 0 ? `Device is ${diff.toFixed(0)}% higher` : diff < 0 ? `Simulation is ${Math.abs(diff).toFixed(0)}% higher` : "Equal levels"}
+          {diff > 0 ? `Cihaz %${diff.toFixed(0)} daha yuksek` : diff < 0 ? `Simulasyon %${Math.abs(diff).toFixed(0)} daha yuksek` : "Esit seviyede"}
         </Text>
       </View>
     </View>
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12,
   },
-  headerTitle: { color: "rgba(235,235,245,0.6)", fontSize: 13, fontWeight: "600", letterSpacing: -0.3 },
+  headerTitle: { color: "rgba(235,235,245,0.6)", fontSize: 13, fontWeight: "600", letterSpacing: -0.3 }, // "Cihaz Pili"
   liveBadge: {
     flexDirection: "row", alignItems: "center", gap: 4,
     backgroundColor: "rgba(48,209,88,0.12)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8,

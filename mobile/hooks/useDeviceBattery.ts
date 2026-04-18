@@ -16,13 +16,13 @@ export interface DeviceBatteryState {
 function getStateLabel(state: Battery.BatteryState): string {
   switch (state) {
     case Battery.BatteryState.CHARGING:
-      return "Charging";
+      return "Sarj Oluyor";
     case Battery.BatteryState.FULL:
-      return "Full";
+      return "Tam Dolu";
     case Battery.BatteryState.UNPLUGGED:
-      return "On Battery";
+      return "Pil ile Calisiyor";
     default:
-      return "Unknown";
+      return "Bilinmiyor";
   }
 }
 
@@ -46,7 +46,7 @@ export function useDeviceBattery(): DeviceBatteryState {
       setLastUpdated(new Date());
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Battery info unavailable");
+      setError(e instanceof Error ? e.message : "Pil bilgisi alinamadi");
     }
   }, []);
 

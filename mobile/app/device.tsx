@@ -147,8 +147,8 @@ export default function DeviceScreen() {
   if (battery.error) {
     return (
       <SafeAreaView style={[styles.container, styles.center]}>
-        <Text style={{ fontSize: 48 }}>{"🔋"}</Text>
-        <Text style={styles.errorTitle}>Battery Unavailable</Text>
+        <Text style={{ fontSize: 48 }}>{"\uD83D\uDD0B"}</Text>
+        <Text style={styles.errorTitle}>Pil Bilgisi Alinamadi</Text>
         <Text style={styles.errorSub}>{battery.error}</Text>
       </SafeAreaView>
     );
@@ -159,10 +159,10 @@ export default function DeviceScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} bounces>
         <FadeIn delay={0}>
           <View style={styles.header}>
-            <Text style={styles.largeTitle}>Device Battery</Text>
+            <Text style={styles.largeTitle}>Cihaz Pili</Text>
             <View style={styles.liveBadge}>
               <View style={styles.liveDot} />
-              <Text style={styles.liveText}>LIVE</Text>
+              <Text style={styles.liveText}>CANLI</Text>
             </View>
           </View>
         </FadeIn>
@@ -187,20 +187,20 @@ export default function DeviceScreen() {
         {/* Stats grid */}
         <FadeIn delay={160}>
           <View style={styles.statsGrid}>
-            <StatCard label="Battery Level" value={`${battery.percent}%`} color={color} />
-            <StatCard label="Status" value={battery.stateLabel} color={battery.isCharging ? "#30D158" : "#FFFFFF"} />
-            <StatCard label="Low Battery" value={battery.isLow ? "Yes" : "No"} color={battery.isLow ? "#FF453A" : "#30D158"} />
-            <StatCard label="Low Power Mode" value={battery.lowPowerMode ? "On" : "Off"} color={battery.lowPowerMode ? "#FF9F0A" : "rgba(235,235,245,0.4)"} />
+            <StatCard label="Pil Seviyesi" value={`${battery.percent}%`} color={color} />
+            <StatCard label="Durum" value={battery.stateLabel} color={battery.isCharging ? "#30D158" : "#FFFFFF"} />
+            <StatCard label="Dusuk Pil" value={battery.isLow ? "Evet" : "Hayir"} color={battery.isLow ? "#FF453A" : "#30D158"} />
+            <StatCard label="Guc Tasarrufu" value={battery.lowPowerMode ? "Acik" : "Kapali"} color={battery.lowPowerMode ? "#FF9F0A" : "rgba(235,235,245,0.4)"} />
           </View>
         </FadeIn>
 
         {/* Comparison */}
         <FadeIn delay={240}>
           <View style={styles.compCard}>
-            <Text style={styles.compTitle}>Comparison</Text>
+            <Text style={styles.compTitle}>Karsilastirma</Text>
 
             <View style={styles.compRow}>
-              <Text style={styles.compLabel}>Your Device</Text>
+              <Text style={styles.compLabel}>Cihazin</Text>
               <Text style={[styles.compValue, { color }]}>{battery.percent}%</Text>
             </View>
             <View style={styles.barTrack}>
@@ -208,7 +208,7 @@ export default function DeviceScreen() {
             </View>
 
             <View style={[styles.compRow, { marginTop: 12 }]}>
-              <Text style={styles.compLabel}>Simulation Battery</Text>
+              <Text style={styles.compLabel}>Simulasyon Bataryasi</Text>
               <Text style={[styles.compValue, { color: "#FFD60A" }]}>{simPercent.toFixed(1)}%</Text>
             </View>
             <View style={styles.barTrack}>
@@ -216,9 +216,9 @@ export default function DeviceScreen() {
             </View>
 
             <Text style={styles.diffText}>
-              {diff > 0 ? `Device is ${diff.toFixed(0)}% higher than simulation`
-                : diff < 0 ? `Simulation is ${Math.abs(diff).toFixed(0)}% higher than device`
-                : "Both at equal levels"}
+              {diff > 0 ? `Cihaz simulasyondan %${diff.toFixed(0)} daha yuksek`
+                : diff < 0 ? `Simulasyon cihazdan %${Math.abs(diff).toFixed(0)} daha yuksek`
+                : "Esit seviyede"}
             </Text>
           </View>
         </FadeIn>
@@ -226,7 +226,7 @@ export default function DeviceScreen() {
         {/* Last updated */}
         <FadeIn delay={320}>
           <Text style={styles.updatedText}>
-            Last updated: {battery.lastUpdated.toLocaleTimeString()}
+            Son guncelleme: {battery.lastUpdated.toLocaleTimeString()}
           </Text>
         </FadeIn>
 

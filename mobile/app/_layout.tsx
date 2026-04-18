@@ -53,9 +53,10 @@ export default function Layout() {
         <Tabs.Screen
           name="device"
           options={{
-            title: "Battery",
+            title: "Cihaz",
             headerShown: false,
             tabBarIcon: ({ color }) => <TabIcon label={"\uD83D\uDD0B"} color={color} />,
+            tabBarActiveTintColor: "#30D158",
           }}
         />
         <Tabs.Screen
