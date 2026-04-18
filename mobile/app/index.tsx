@@ -195,6 +195,9 @@ export default function DashboardScreen() {
             isLow={battery.isLow}
             lowPowerMode={battery.lowPowerMode}
             simPercent={status.battery_percent}
+            voltage={battery.voltage}
+            current={battery.current}
+            powerWatts={battery.powerWatts}
           />
         </FadeIn>
 

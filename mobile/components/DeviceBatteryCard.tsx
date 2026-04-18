@@ -12,6 +12,9 @@ interface Props {
   isLow: boolean;
   lowPowerMode: boolean;
   simPercent: number;
+  voltage?: number;
+  current?: number;
+  powerWatts?: number;
 }
 
 function getColor(p: number): string {
@@ -20,7 +23,7 @@ function getColor(p: number): string {
   return "#FF453A";
 }
 
-function DeviceBatteryCard({ percent, isCharging, stateLabel, isLow, lowPowerMode, simPercent }: Props) {
+function DeviceBatteryCard({ percent, isCharging, stateLabel, isLow, lowPowerMode, simPercent, voltage, current, powerWatts }: Props) {
   const fillAnim = useRef(new Animated.Value(percent)).current;
   const pulseScale = useRef(new Animated.Value(1)).current;
   const lowPulse = useRef(new Animated.Value(0)).current;
@@ -128,7 +131,7 @@ function DeviceBatteryCard({ percent, isCharging, stateLabel, isLow, lowPowerMod
         <View style={styles.statsColumn}>
           <StatItem label="Pil Seviyesi" value={`${percent}%`} color={color} />
           <StatItem label="Durum" value={stateLabel} color={isCharging ? "#30D158" : "#FFFFFF"} />
-          <StatItem label="Guc Tasarrufu" value={lowPowerMode ? "Acik" : "Kapali"} color={lowPowerMode ? "#FF9F0A" : "rgba(235,235,245,0.4)"} />
+          <StatItem label="Guc" value={voltage && current ? `${voltage}V / ${current}mA / ${powerWatts}W` : "—"} color="#FFD60A" />
         </View>
       </View>
 
