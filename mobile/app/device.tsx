@@ -213,7 +213,7 @@ export default function DeviceScreen() {
         </FadeIn>
 
         {/* Rate + Low Power row */}
-        <FadeIn delay={160}>
+        <FadeIn delay={80}>
           <View style={styles.metricsRow}>
             <View style={[styles.metricWide, styles.card]}>
               <Text style={styles.metricWideLabel}>Sarj Hizi</Text>
@@ -234,7 +234,7 @@ export default function DeviceScreen() {
         </FadeIn>
 
         {/* Live chart */}
-        <FadeIn delay={220}>
+        <FadeIn delay={100}>
           <View style={styles.card}>
             <View style={styles.cardHeaderRow}>
               <Text style={styles.sectionTitle}>Pil Gecmisi</Text>
@@ -245,7 +245,7 @@ export default function DeviceScreen() {
         </FadeIn>
 
         {/* Comparison */}
-        <FadeIn delay={280}>
+        <FadeIn delay={120}>
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Karsilastirma</Text>
             <View style={{ marginTop: 12 }}>
@@ -272,7 +272,7 @@ export default function DeviceScreen() {
           </View>
         </FadeIn>
 
-        <FadeIn delay={340}>
+        <FadeIn delay={140}>
           <Text style={styles.updatedText}>Son guncelleme: {battery.lastUpdated.toLocaleTimeString()}</Text>
         </FadeIn>
 

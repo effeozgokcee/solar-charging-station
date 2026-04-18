@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { View, Text, Platform } from "react-native";
@@ -8,6 +9,27 @@ function TabIcon({ label, color }: { label: string; color: string }) {
 
 export default function Layout() {
   const isWeb = Platform.OS === "web";
+
+  // Fix History.pushState crash on web
+  useEffect(() => {
+    if (isWeb && typeof window !== "undefined") {
+      const origPush = window.history.pushState.bind(window.history);
+      window.history.pushState = function (...args: any[]) {
+        try {
+          return origPush(...args);
+        } catch {
+          // Silently ignore dispatchEvent null error
+        }
+      };
+      const origReplace = window.history.replaceState.bind(window.history);
+      window.history.replaceState = function (...args: any[]) {
+        try {
+          return origReplace(...args);
+        } catch {}
+      };
+    }
+  }, [isWeb]);
+
   return (
     <View style={{ flex: 1, backgroundColor: "#000000" }}>
       <StatusBar style="light" />

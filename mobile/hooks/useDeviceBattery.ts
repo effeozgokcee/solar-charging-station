@@ -3,7 +3,7 @@ import * as Battery from "expo-battery";
 
 export interface BatterySnapshot {
   percent: number;
-  time: number; // timestamp ms
+  time: number;
 }
 
 export interface DeviceBatteryState {
@@ -16,11 +16,10 @@ export interface DeviceBatteryState {
   lastUpdated: Date;
   error: string | null;
   refresh: () => void;
-  // Calculated power metrics
   voltage: number;
-  current: number;       // mA
-  powerWatts: number;     // W
-  ratePerMinute: number;  // %/min change rate
+  current: number;
+  powerWatts: number;
+  ratePerMinute: number;
   history: BatterySnapshot[];
 }
 
@@ -37,23 +36,36 @@ function getStateLabel(state: Battery.BatteryState): string {
   }
 }
 
-// Typical phone battery: 3.7V nominal, ~4.2V charging, ~3.5V discharging
+// Realistic voltage curve based on battery percent
 function estimateVoltage(percent: number, isCharging: boolean): number {
   if (isCharging) {
-    return 4.0 + (percent / 100) * 0.2; // 4.0V - 4.2V while charging
+    // Charging: 4.0V at 0% → 4.35V at 100%
+    return 4.0 + (percent / 100) * 0.35;
   }
-  return 3.4 + (percent / 100) * 0.5; // 3.4V - 3.9V on battery
+  // Discharging: 3.3V at 0% → 4.1V at 100% (non-linear)
+  if (percent > 80) return 3.9 + ((percent - 80) / 20) * 0.2;
+  if (percent > 20) return 3.5 + ((percent - 20) / 60) * 0.4;
+  return 3.3 + (percent / 20) * 0.2;
 }
 
-// Estimate current from rate of change (typical 4000mAh battery)
-function estimateCurrent(ratePerMin: number, voltage: number): number {
-  // rate is %/min, battery ~4000mAh
-  // %/min * 4000mAh / 100 = mA equivalent
-  const mA = Math.abs(ratePerMin) * 4000 / 100;
-  return Math.round(mA);
+// When rate is too small to measure, estimate from charging state
+// Typical phone: ~2500mA charging, ~300-500mA screen-on drain
+function estimateCurrent(ratePerMin: number, isCharging: boolean, percent: number): number {
+  if (Math.abs(ratePerMin) > 0.01) {
+    // We have real rate data — calculate from it (assume 4000mAh battery)
+    return Math.round(Math.abs(ratePerMin) * 4000 / 100);
+  }
+  // Rate too small to measure — use typical estimates
+  if (isCharging) {
+    if (percent > 80) return 1200; // Trickle charge above 80%
+    if (percent > 50) return 2000;
+    return 2500; // Fast charge below 50%
+  }
+  // Discharging — typical screen-on usage
+  return 350;
 }
 
-const MAX_HISTORY = 120; // 2 minutes at 1s intervals
+const MAX_HISTORY = 180; // 3 minutes at 1s intervals
 
 export function useDeviceBattery(): DeviceBatteryState {
   const [percent, setPercent] = useState(0);
@@ -65,6 +77,7 @@ export function useDeviceBattery(): DeviceBatteryState {
   const [ratePerMinute, setRatePerMinute] = useState(0);
 
   const historyRef = useRef<BatterySnapshot[]>([]);
+  const lastPercentRef = useRef<number>(-1);
 
   const fetchAll = useCallback(async () => {
     try {
@@ -73,7 +86,7 @@ export function useDeviceBattery(): DeviceBatteryState {
         Battery.getBatteryStateAsync(),
         Battery.isLowPowerModeEnabledAsync(),
       ]);
-      const pct = Math.round(level * 100);
+      const pct = Math.round(level * 1000) / 10; // 1 decimal precision
       const now = Date.now();
 
       setPercent(pct);
@@ -82,20 +95,26 @@ export function useDeviceBattery(): DeviceBatteryState {
       setLastUpdated(new Date());
       setError(null);
 
-      // Track history
-      const snap: BatterySnapshot = { percent: pct, time: now };
-      historyRef.current = [...historyRef.current.slice(-MAX_HISTORY + 1), snap];
-      setHistory([...historyRef.current]);
+      // Only add to history if value actually changed or every 5 seconds
+      const lastSnap = historyRef.current[historyRef.current.length - 1];
+      const shouldRecord = !lastSnap || pct !== lastSnap.percent || (now - lastSnap.time > 5000);
 
-      // Calculate rate from last 30 seconds of data
-      const thirtySecsAgo = now - 30000;
-      const recentHistory = historyRef.current.filter(s => s.time >= thirtySecsAgo);
-      if (recentHistory.length >= 2) {
-        const first = recentHistory[0];
-        const last = recentHistory[recentHistory.length - 1];
+      if (shouldRecord) {
+        const snap: BatterySnapshot = { percent: pct, time: now };
+        historyRef.current = [...historyRef.current.slice(-MAX_HISTORY + 1), snap];
+        setHistory([...historyRef.current]);
+      }
+
+      // Calculate rate from available history
+      const windowMs = 60000; // 1 minute window
+      const cutoff = now - windowMs;
+      const window = historyRef.current.filter(s => s.time >= cutoff);
+      if (window.length >= 2) {
+        const first = window[0];
+        const last = window[window.length - 1];
         const dtMin = (last.time - first.time) / 60000;
-        if (dtMin > 0.05) {
-          setRatePerMinute((last.percent - first.percent) / dtMin);
+        if (dtMin > 0.1) {
+          setRatePerMinute(parseFloat(((last.percent - first.percent) / dtMin).toFixed(3)));
         }
       }
     } catch (e) {
@@ -108,41 +127,28 @@ export function useDeviceBattery(): DeviceBatteryState {
 
     const subs: Battery.Subscription[] = [];
     try {
-      subs.push(
-        Battery.addBatteryLevelListener(({ batteryLevel }) => {
-          setPercent(Math.round(batteryLevel * 100));
-          setLastUpdated(new Date());
-        })
-      );
-      subs.push(
-        Battery.addBatteryStateListener(({ batteryState }) => {
-          setState(batteryState);
-          setLastUpdated(new Date());
-        })
-      );
-      subs.push(
-        Battery.addLowPowerModeListener(({ lowPowerMode: lpm }) => {
-          setLowPowerMode(lpm);
-        })
-      );
-    } catch {
-      // Listeners may not be available on all platforms
-    }
+      subs.push(Battery.addBatteryLevelListener(({ batteryLevel }) => {
+        setPercent(Math.round(batteryLevel * 1000) / 10);
+        setLastUpdated(new Date());
+      }));
+      subs.push(Battery.addBatteryStateListener(({ batteryState }) => {
+        setState(batteryState);
+        setLastUpdated(new Date());
+      }));
+      subs.push(Battery.addLowPowerModeListener(({ lowPowerMode: lpm }) => {
+        setLowPowerMode(lpm);
+      }));
+    } catch {}
 
-    // Polling: her 1 saniyede guncelle
     const interval = setInterval(fetchAll, 1000);
-
-    return () => {
-      subs.forEach((s) => s.remove());
-      clearInterval(interval);
-    };
+    return () => { subs.forEach(s => s.remove()); clearInterval(interval); };
   }, [fetchAll]);
 
   const isCharging = state === Battery.BatteryState.CHARGING;
   const isLow = percent < 20 && !isCharging;
   const voltage = estimateVoltage(percent, isCharging);
-  const current = estimateCurrent(ratePerMinute, voltage);
-  const powerWatts = parseFloat(((voltage * current) / 1000).toFixed(2));
+  const current = estimateCurrent(ratePerMinute, isCharging, percent);
+  const powerWatts = parseFloat(((voltage * current) / 1000).toFixed(1));
 
   return {
     percent,
@@ -157,7 +163,7 @@ export function useDeviceBattery(): DeviceBatteryState {
     voltage: parseFloat(voltage.toFixed(2)),
     current,
     powerWatts,
-    ratePerMinute: parseFloat(ratePerMinute.toFixed(3)),
+    ratePerMinute,
     history,
   };
 }

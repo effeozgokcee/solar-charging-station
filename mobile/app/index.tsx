@@ -165,19 +165,19 @@ export default function DashboardScreen() {
         </FadeIn>
 
         {/* Sun Cycle */}
-        <FadeIn delay={60}>
+        <FadeIn delay={30}>
           <GlowCard>
             <SunCycle time={status.time} />
           </GlowCard>
         </FadeIn>
 
         {/* Energy Flow */}
-        <FadeIn delay={120}>
+        <FadeIn delay={60}>
           <EnergyFlow netPower={status.net_power} solarWatts={status.solar_watts} phoneConnected={status.phone_connected} />
         </FadeIn>
 
         {/* Battery */}
-        <FadeIn delay={180}>
+        <FadeIn delay={90}>
           <GlowCard onPress={() => openInfo("battery")}>
             <View style={styles.cardHeader}>
               <Text style={styles.cardLabel}>Battery</Text>
@@ -190,7 +190,7 @@ export default function DashboardScreen() {
         </FadeIn>
 
         {/* Stats */}
-        <FadeIn delay={240}>
+        <FadeIn delay={120}>
           <View style={styles.statsRow}>
             <StatPill value={status.solar_watts.toFixed(1)} unit="W" label="Solar" color="#FFD60A" onPress={() => openInfo("solar")} />
             <StatPill value={status.consumption_watts.toFixed(1)} unit="W" label={deviceLabel} color="#0A84FF" onPress={() => openInfo("consumption")} />
@@ -199,7 +199,7 @@ export default function DashboardScreen() {
         </FadeIn>
 
         {/* Efficiency bar */}
-        <FadeIn delay={300}>
+        <FadeIn delay={150}>
           <GlowCard onPress={() => openInfo("efficiency")}>
             <View style={styles.effRow}>
               <View style={styles.effItem}>
@@ -228,7 +228,7 @@ export default function DashboardScreen() {
         </FadeIn>
 
         {/* Device battery mini */}
-        <FadeIn delay={360}>
+        <FadeIn delay={180}>
           <GlowCard>
             <View style={styles.cardHeader}>
               <Text style={styles.cardLabel}>Your Device</Text>
