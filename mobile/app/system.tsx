@@ -124,7 +124,7 @@ export default function SystemScreen() {
           <Text style={styles.hint}>Tap circuit nodes for detailed information</Text>
         </FadeIn>
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 20 }} />
       </ScrollView>
 
       <InfoDrawer visible={drawerVisible} content={drawerContent} onClose={() => setDrawerVisible(false)} />
@@ -144,7 +144,7 @@ function SpecRow({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000000" },
   center: { justifyContent: "center", alignItems: "center" },
-  content: { paddingHorizontal: 16, paddingBottom: 32 },
+  content: { paddingHorizontal: 16, paddingBottom: 80 },
   largeTitle: { color: "#FFFFFF", fontSize: 34, fontWeight: "700", letterSpacing: -0.5, marginTop: 8, marginBottom: 16 },
   loadingText: { color: "rgba(235,235,245,0.6)", marginTop: 12, fontSize: 15 },
   illustrationCard: {

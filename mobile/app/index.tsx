@@ -268,7 +268,7 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000000" },
   center: { justifyContent: "center", alignItems: "center" },
-  content: { paddingHorizontal: 20, paddingBottom: 32 },
+  content: { paddingHorizontal: 16, paddingBottom: 80 },
   // Header
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20, marginTop: 8 },
   greeting: { color: "#FFFFFF", fontSize: 32, fontWeight: "800", letterSpacing: -0.8 },
@@ -289,10 +289,10 @@ const styles = StyleSheet.create({
   whBadge: { backgroundColor: "rgba(255,214,10,0.1)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
   whText: { color: "#FFD60A", fontSize: 12, fontWeight: "600" },
   // Stats
-  statsRow: { flexDirection: "row", gap: 8 },
-  statPill: { flex: 1, alignItems: "center", paddingVertical: 14, paddingHorizontal: 8, marginBottom: 10 },
+  statsRow: { flexDirection: "row", gap: 6 },
+  statPill: { flex: 1, alignItems: "center", paddingVertical: 12, paddingHorizontal: 4, marginBottom: 8 },
   statDot: { width: 6, height: 6, borderRadius: 3, marginBottom: 8 },
-  statPillValue: { fontSize: 22, fontWeight: "800", letterSpacing: -0.8 },
+  statPillValue: { fontSize: 20, fontWeight: "800", letterSpacing: -0.5 },
   statPillUnit: { fontSize: 13, fontWeight: "400" },
   statPillLabel: { color: "rgba(235,235,245,0.3)", fontSize: 11, marginTop: 4, fontWeight: "500", letterSpacing: 0.2 },
   // Efficiency
@@ -303,11 +303,11 @@ const styles = StyleSheet.create({
   effValue: { color: "#FFFFFF", fontSize: 18, fontWeight: "700", letterSpacing: -0.5 },
   // Device battery mini
   liveDot: { width: 8, height: 8, borderRadius: 4 },
-  deviceRow: { flexDirection: "row", alignItems: "center", paddingTop: 4 },
+  deviceRow: { flexDirection: "row", alignItems: "center", paddingTop: 4, flexWrap: "wrap" },
   deviceMetric: { flex: 1, alignItems: "center" },
   deviceDivider: { width: 1, height: 28, backgroundColor: "rgba(255,255,255,0.06)" },
-  deviceValue: { fontSize: 17, fontWeight: "700", letterSpacing: -0.5 },
-  deviceLabel: { color: "rgba(235,235,245,0.3)", fontSize: 10, marginTop: 3, fontWeight: "500" },
+  deviceValue: { fontSize: 15, fontWeight: "700", letterSpacing: -0.3 },
+  deviceLabel: { color: "rgba(235,235,245,0.3)", fontSize: 9, marginTop: 2, fontWeight: "500" },
   // Loading/Error
   loadingText: { color: "rgba(235,235,245,0.5)", marginTop: 16, fontSize: 15 },
   errorTitle: { color: "#FF453A", fontSize: 20, fontWeight: "700", marginTop: 20 },

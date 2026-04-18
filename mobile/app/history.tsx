@@ -214,7 +214,7 @@ function SummaryItem({ label, value, color }: { label: string; value: string; co
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000000" },
   center: { justifyContent: "center", alignItems: "center", padding: 32 },
-  content: { paddingHorizontal: 16, paddingBottom: 32 },
+  content: { paddingHorizontal: 16, paddingBottom: 80 },
   headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8 },
   largeTitle: { color: "#FFFFFF", fontSize: 34, fontWeight: "700", letterSpacing: -0.5 },
   subtitle: { color: "rgba(235,235,245,0.3)", fontSize: 13, letterSpacing: -0.3, marginBottom: 16 },

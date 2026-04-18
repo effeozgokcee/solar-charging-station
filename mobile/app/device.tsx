@@ -299,7 +299,7 @@ function MetricTile({ icon, value, unit, label, color }: {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000000" },
   center: { justifyContent: "center", alignItems: "center" },
-  content: { paddingHorizontal: 20, paddingBottom: 32 },
+  content: { paddingHorizontal: 16, paddingBottom: 80 },
   // Header
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8, marginBottom: 20 },
   largeTitle: { color: "#FFFFFF", fontSize: 32, fontWeight: "800", letterSpacing: -0.8 },
@@ -328,11 +328,11 @@ const styles = StyleSheet.create({
   sectionTitle: { color: "rgba(235,235,245,0.5)", fontSize: 13, fontWeight: "600", letterSpacing: 0.3, textTransform: "uppercase" },
   sectionSub: { color: "rgba(235,235,245,0.2)", fontSize: 11 },
   // Metrics
-  metricsRow: { flexDirection: "row", gap: 8, marginBottom: 0 },
-  metricTile: { flex: 1, alignItems: "center", paddingVertical: 14 },
-  metricIcon: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center", marginBottom: 8 },
+  metricsRow: { flexDirection: "row", gap: 6, marginBottom: 0 },
+  metricTile: { flex: 1, alignItems: "center", paddingVertical: 12, paddingHorizontal: 4 },
+  metricIcon: { width: 28, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center", marginBottom: 6 },
   metricIconText: { fontSize: 14, fontWeight: "800" },
-  metricTileValue: { fontSize: 20, fontWeight: "800", letterSpacing: -0.5 },
+  metricTileValue: { fontSize: 17, fontWeight: "800", letterSpacing: -0.5 },
   metricTileUnit: { fontSize: 11, fontWeight: "400" },
   metricTileLabel: { color: "rgba(235,235,245,0.3)", fontSize: 10, marginTop: 4, fontWeight: "500" },
   metricWide: { flex: 1 },

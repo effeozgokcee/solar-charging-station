@@ -104,8 +104,7 @@ function DeviceSelector({ selected, onSelect }: {
   selected: string;
   onSelect: (id: string, watts: number) => void;
 }) {
-  const horizontalPad = 40 + 16; // screen padding + gaps
-  const cardWidth = Math.floor((SCREEN_W - horizontalPad) / 3);
+  const cardWidth = Math.floor((SCREEN_W - 32 - 12) / 3); // 16px padding each side + 6px*2 gaps
 
   return (
     <View style={styles.deviceGrid}>
@@ -285,7 +284,7 @@ function InfoRow({ label, value, border }: { label: string; value: string; borde
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000000" },
-  content: { paddingHorizontal: 16, paddingBottom: 32 },
+  content: { paddingHorizontal: 16, paddingBottom: 80 },
   largeTitle: { color: "#FFFFFF", fontSize: 34, fontWeight: "700", letterSpacing: -0.5, marginTop: 8, marginBottom: 8 },
   sectionHeader: {
     color: "rgba(235,235,245,0.6)", fontSize: 13, fontWeight: "400",
@@ -327,11 +326,11 @@ const styles = StyleSheet.create({
   speedTextActive: { fontWeight: "600", color: "#FFFFFF" },
   // FIX 5: Device grid
   deviceGrid: {
-    flexDirection: "row", flexWrap: "wrap", gap: 8,
+    flexDirection: "row", flexWrap: "wrap", gap: 6,
   },
   deviceCard: {
-    height: 80, borderRadius: 12, alignItems: "center",
-    justifyContent: "center", gap: 4,
+    height: 76, borderRadius: 12, alignItems: "center",
+    justifyContent: "center", gap: 3,
   },
   deviceLabel: {
     color: "rgba(235,235,245,0.6)", fontSize: 11, fontWeight: "500", letterSpacing: -0.2,
