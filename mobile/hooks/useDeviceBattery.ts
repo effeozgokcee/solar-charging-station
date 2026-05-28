@@ -87,15 +87,16 @@ export function useDeviceBattery(): DeviceBatteryState {
         Battery.getBatteryStateAsync(),
         Battery.isLowPowerModeEnabledAsync(),
       ]);
-      if (level < 0) return; // iOS returns -1 when monitoring disabled
-      const pct = Math.round(level * 100);
       const now = Date.now();
 
-      setPercent(pct);
       setState(battState);
       setLowPowerMode(lpm);
       setLastUpdated(new Date());
       setError(null);
+
+      if (level < 0) return; // iOS returns -1 when monitoring disabled — skip percent update only
+      const pct = Math.round(level * 100);
+      setPercent(pct);
 
       // Only add to history if value actually changed or every 5 seconds
       const lastSnap = historyRef.current[historyRef.current.length - 1];

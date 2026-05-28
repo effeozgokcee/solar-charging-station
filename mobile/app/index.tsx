@@ -233,11 +233,11 @@ export default function DashboardScreen() {
             <View style={styles.cardHeader}>
               <Text style={styles.cardLabel}>Your Device</Text>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                {battery.lowPowerMode && (
-                  <View style={styles.lpmBadge}>
-                    <Text style={styles.lpmBadgeText}>Guc Tasarrufu</Text>
-                  </View>
-                )}
+                <View style={[styles.lpmBadge, !battery.lowPowerMode && styles.lpmBadgeOff]}>
+                  <Text style={[styles.lpmBadgeText, !battery.lowPowerMode && styles.lpmBadgeTextOff]}>
+                    {battery.lowPowerMode ? "Guc Tasarrufu Acik" : "Normal Mod"}
+                  </Text>
+                </View>
                 <View style={[styles.liveDot, { backgroundColor: "#30D158" }]} />
               </View>
             </View>
@@ -318,7 +318,12 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 10,
   },
+  lpmBadgeOff: {
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderColor: "rgba(255,255,255,0.1)",
+  },
   lpmBadgeText: { color: "#FF9F0A", fontSize: 11, fontWeight: "700", letterSpacing: 0.2 },
+  lpmBadgeTextOff: { color: "rgba(235,235,245,0.45)" },
   deviceRow: { flexDirection: "row", alignItems: "center", paddingTop: 4, flexWrap: "wrap" },
   deviceMetric: { flex: 1, alignItems: "center" },
   deviceDivider: { width: 1, height: 28, backgroundColor: "rgba(255,255,255,0.06)" },
