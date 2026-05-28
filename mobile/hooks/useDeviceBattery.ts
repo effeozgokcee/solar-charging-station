@@ -126,8 +126,7 @@ export function useDeviceBattery(): DeviceBatteryState {
   }, []);
 
   useEffect(() => {
-    fetchAll();
-
+    // Register listeners FIRST so iOS starts power-state monitoring before initial read
     const subs: Battery.Subscription[] = [];
     try {
       subs.push(Battery.addBatteryLevelListener(({ batteryLevel }) => {
@@ -147,6 +146,11 @@ export function useDeviceBattery(): DeviceBatteryState {
       }));
     } catch {}
 
+    // Initial read + warm-up retries: iOS may return stale power state on cold start
+    // until the native observer is initialized, so re-read a few times early.
+    fetchAll();
+    const warmups = [150, 500, 1200, 2500].map((d) => setTimeout(fetchAll, d));
+
     const appStateSub = AppState.addEventListener("change", (s: AppStateStatus) => {
       if (s === "active") fetchAll();
     });
@@ -155,6 +159,7 @@ export function useDeviceBattery(): DeviceBatteryState {
     return () => {
       subs.forEach(s => s.remove());
       appStateSub.remove();
+      warmups.forEach(clearTimeout);
       clearInterval(interval);
     };
   }, [fetchAll]);
