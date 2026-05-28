@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { AppState, AppStateStatus } from "react-native";
 import * as Battery from "expo-battery";
 
 export interface BatterySnapshot {
@@ -86,7 +87,8 @@ export function useDeviceBattery(): DeviceBatteryState {
         Battery.getBatteryStateAsync(),
         Battery.isLowPowerModeEnabledAsync(),
       ]);
-      const pct = Math.round(level * 1000) / 10; // 1 decimal precision
+      if (level < 0) return; // iOS returns -1 when monitoring disabled
+      const pct = Math.round(level * 100);
       const now = Date.now();
 
       setPercent(pct);
@@ -128,20 +130,32 @@ export function useDeviceBattery(): DeviceBatteryState {
     const subs: Battery.Subscription[] = [];
     try {
       subs.push(Battery.addBatteryLevelListener(({ batteryLevel }) => {
-        setPercent(Math.round(batteryLevel * 1000) / 10);
+        if (batteryLevel < 0) return;
+        setPercent(Math.round(batteryLevel * 100));
         setLastUpdated(new Date());
+        fetchAll();
       }));
       subs.push(Battery.addBatteryStateListener(({ batteryState }) => {
         setState(batteryState);
         setLastUpdated(new Date());
+        fetchAll();
       }));
       subs.push(Battery.addLowPowerModeListener(({ lowPowerMode: lpm }) => {
         setLowPowerMode(lpm);
+        fetchAll();
       }));
     } catch {}
 
-    const interval = setInterval(fetchAll, 1000);
-    return () => { subs.forEach(s => s.remove()); clearInterval(interval); };
+    const appStateSub = AppState.addEventListener("change", (s: AppStateStatus) => {
+      if (s === "active") fetchAll();
+    });
+
+    const interval = setInterval(fetchAll, 500);
+    return () => {
+      subs.forEach(s => s.remove());
+      appStateSub.remove();
+      clearInterval(interval);
+    };
   }, [fetchAll]);
 
   const isCharging = state === Battery.BatteryState.CHARGING;

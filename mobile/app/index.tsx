@@ -232,7 +232,14 @@ export default function DashboardScreen() {
           <GlowCard>
             <View style={styles.cardHeader}>
               <Text style={styles.cardLabel}>Your Device</Text>
-              <View style={[styles.liveDot, { backgroundColor: "#30D158" }]} />
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                {battery.lowPowerMode && (
+                  <View style={styles.lpmBadge}>
+                    <Text style={styles.lpmBadgeText}>Guc Tasarrufu</Text>
+                  </View>
+                )}
+                <View style={[styles.liveDot, { backgroundColor: "#30D158" }]} />
+              </View>
             </View>
             <View style={styles.deviceRow}>
               <View style={styles.deviceMetric}>
@@ -303,6 +310,15 @@ const styles = StyleSheet.create({
   effValue: { color: "#FFFFFF", fontSize: 18, fontWeight: "700", letterSpacing: -0.5 },
   // Device battery mini
   liveDot: { width: 8, height: 8, borderRadius: 4 },
+  lpmBadge: {
+    backgroundColor: "rgba(255,159,10,0.18)",
+    borderColor: "rgba(255,159,10,0.45)",
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  lpmBadgeText: { color: "#FF9F0A", fontSize: 11, fontWeight: "700", letterSpacing: 0.2 },
   deviceRow: { flexDirection: "row", alignItems: "center", paddingTop: 4, flexWrap: "wrap" },
   deviceMetric: { flex: 1, alignItems: "center" },
   deviceDivider: { width: 1, height: 28, backgroundColor: "rgba(255,255,255,0.06)" },
